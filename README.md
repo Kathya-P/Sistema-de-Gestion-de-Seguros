@@ -25,15 +25,15 @@ Sistema integral de gestión de seguros desarrollado completamente en React, sim
 ## 🚀 Instalación
 
 ```bash
-git clone https://github.com/tu-usuario/insurance-management-system.git
-cd insurance-management-system
+git clone https://github.com/Kathya-P/Sistema-de-Gestion-de-Seguros.git
+cd Sistema-de-Gestion-de-Seguros
 npm install
 npm start
 ```
 
 ## 📱 Demo
 
-La aplicación estará disponible en `http://localhost:3000`
+La aplicación estará disponible en ...
 
 ## 🏗️ Estructura del Proyecto
 
@@ -81,22 +81,6 @@ src/
 - [ ] App móvil con React Native
 - [ ] Integración con APIs reales
 
-## 🤝 Contribución
+## 📄 Créditos
 
-Las contribuciones son bienvenidas. Por favor:
-
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
-## 📄 Licencia
-
-Distribuido bajo la Licencia MIT. Ver `LICENSE` para más información.
-
-## 📧 Contacto
-
-Tu Nombre - [@tu_twitter](https://twitter.com/tu_twitter) - email@ejemplo.com
-
-Link del Proyecto: [https://github.com/tu-usuario/insurance-management-system](https://github.com/tu-usuario/insurance-management-system)
+Este proyecto es elaborado por @Kathya-P y @Dani-Monge.
