@@ -11,7 +11,6 @@ Sistema integral de gestión de seguros desarrollado completamente en React, sim
 - **Procesamiento de Reclamos**: Workflow automatizado
 - **Detección de Fraudes**: Algoritmos de ML simulados
 - **Dashboard Ejecutivo**: KPIs y analytics en tiempo real
-- **Gestión de Agentes**: Portal para intermediarios
 
 ## 🛠️ Tecnologías
 
