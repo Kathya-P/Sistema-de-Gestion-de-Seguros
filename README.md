@@ -33,7 +33,7 @@ npm start
 
 ## 📱 Demo
 
-La aplicación estará disponible en ...
+La aplicación estará disponible en (hay que actualizar)
 
 ## 🏗️ Estructura del Proyecto
 
@@ -74,7 +74,7 @@ src/
 - Dashboard de casos sospechosos
 - Análisis de patrones
 
-## 📈 Próximas Funcionalidades
+## 📈 Próximas Posibles Funcionalidades
 
 - [ ] Módulo de reaseguros
 - [ ] Chat en tiempo real
@@ -83,4 +83,4 @@ src/
 
 ## 📄 Créditos
 
-Este proyecto es elaborado por @Kathya-P y @Dani-Monge.
+Este proyecto es elaborado por @Kathya-P y @Dani-Monge para la materia de Programación Estructura en UNICAES.
