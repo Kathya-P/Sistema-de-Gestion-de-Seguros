@@ -82,4 +82,4 @@ src/
 
 ## 📄 Créditos
 
-Este proyecto es elaborado por @Kathya-P y @Dani-Monge para la materia de Programación Estructura en UNICAES.
+Este proyecto es elaborado por @Kathya-P y @m0nge para la materia de Programación Estructurada en UNICAES.
