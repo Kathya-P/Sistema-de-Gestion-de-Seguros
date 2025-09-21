@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
 import './App.css';
-import {
-  Plus,
-  Search,
-  Filter,
-} from 'lucide-react';
 
 // Componente Detección de Fraudes
 import { 
