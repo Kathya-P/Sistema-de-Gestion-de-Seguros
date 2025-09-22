@@ -15,8 +15,8 @@ import Reportes from './components/modules/Reportes';
 import GuestBanner from './components/auth/GuestBanner';
 
 // Importar datos mock y utilidades
-import { menuItems, mockPolizas, mockReclamos, mockClientes, getPageTitle } from './data/mockData';
-import { sessionManager, usePermissions, userManager } from './utils/sessionManager';
+import { users, menuItems, mockPolizas, mockReclamos, mockClientes, getPageTitle } from './data/mockData';
+import { sessionManager, usePermissions } from './utils/sessionManager';
 
 const SistemaGestionSeguros = () => {
   // Estados para autenticación  
@@ -46,7 +46,7 @@ const SistemaGestionSeguros = () => {
 
   // Funciones de autenticación
   const handleLogin = (username, password) => {
-    const user = userManager.authenticateUser(username, password);
+    const user = users.find(u => u.username === username && u.password === password);
     if (user) {
       setIsAuthenticated(true);
       setCurrentUser(user);
@@ -58,11 +58,6 @@ const SistemaGestionSeguros = () => {
       return true;
     }
     return false;
-  };
-
-  const handleRegister = (userData) => {
-    const success = userManager.registerUser(userData);
-    return success;
   };
 
   const handleLogout = () => {
@@ -116,16 +111,12 @@ const SistemaGestionSeguros = () => {
     const primaAnual = valorNum * factorTipo * factorEdad * factorSiniestros * factorDeducible;
     const primaMensual = primaAnual / 12;
 
-    const resultado = {
+    setResultadoCotizacion({
       primaAnual: primaAnual.toFixed(2),
       primaMensual: primaMensual.toFixed(2),
-      factorEdad,
-      factorSiniestros,
-      factorDeducible,
-      ...formData
-    };
-
-    setResultadoCotizacion(resultado);
+      cobertura: valorNum.toFixed(2),
+      deducible: deducibleNum.toFixed(2)
+    });
   };
 
   // Función para renderizar contenido según el módulo activo
@@ -154,54 +145,51 @@ const SistemaGestionSeguros = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Modal de Login/Registro */}
+      {/* Modal de Login */}
       {showLogin && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Autenticación</h2>
+              <h2 className="text-xl font-bold">Iniciar Sesión</h2>
               <button onClick={handleCloseLogin} className="text-gray-500 hover:text-gray-700">
                 ✕
               </button>
             </div>
-            <Login onLogin={handleLogin} onRegister={handleRegister} />
+            <Login onLogin={handleLogin} />
           </div>
         </div>
       )}
 
       {/* Contenido principal - Siempre visible */}
       <div className="flex">
-        {/* Sidebar izquierdo */}
-        <div className="sidebar">
-          <div className="logo">
-            <div className="user-logo">
-              <Shield className="w-6 h-6" style={{color: '#1e3a72'}} />
+          {/* Sidebar izquierdo */}
+          <div className="sidebar">
+            <div className="logo">
+              <div className="user-logo">
+                <Shield className="w-6 h-6" style={{color: '#1e3a72'}} />
+              </div>
+              <div>
+                <h1>SecureTech Solutions</h1>
+              </div>
             </div>
-            <div>
-              <h1>SecureTech Solutions</h1>
-            </div>
-          </div>
 
-          {/* Navegación */}
-          <nav className="nav-menu">
-            <ul className="nav-list">
-              {menuItems.map((item) => (
-                <li key={item.id} className="nav-item">
-                  <button
-                    onClick={() => setActiveModule(item.id)}
-                    className={`nav-button ${activeModule === item.id ? 'active' : ''}`}
-                  >
-                    <item.icon className="w-5 h-5" />
-                    <span>{item.label}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </nav>
+            <nav className="nav-menu">
+              <ul className="nav-list">
+                {menuItems.map((item) => (
+                  <li key={item.id} className="nav-item">
+                    <button
+                      onClick={() => setActiveModule(item.id)}
+                      className={`nav-button ${activeModule === item.id ? 'active' : ''}`}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      <span>{item.label}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
 
-          {/* Footer del sidebar */}
-          <div className="sidebar-footer">
-            {isAuthenticated ? (
+            <div className="sidebar-footer">
               <div className="user-info-sidebar">
                 <div className="user-avatar">
                   <User className="w-5 h-5" />
@@ -218,29 +206,15 @@ const SistemaGestionSeguros = () => {
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
-            ) : (
-              <div className="guest-login-sidebar p-4">
-                <button 
-                  onClick={handleLoginClick}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center justify-center"
-                >
-                  <Shield className="w-4 h-4 mr-2" />
-                  Iniciar Sesión
-                </button>
-              </div>
-            )}
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="main-content">
+            {renderContent()}
           </div>
         </div>
-
-        {/* Main Content */}
-        <div className="main-content">
-          {/* Banner para usuarios invitados */}
-          {!isAuthenticated && <GuestBanner onLoginClick={handleLoginClick} />}
-          
-          {/* Contenido principal */}
-          {renderContent()}
-        </div>
-      </div>
+      )}
     </div>
   );
 };
