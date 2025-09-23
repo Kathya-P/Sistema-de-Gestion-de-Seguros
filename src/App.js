@@ -128,7 +128,7 @@ const SistemaGestionSeguros = () => {
     setResultadoCotizacion(resultado);
   };
 
-  // Función para renderizar contenido según el módulo activo
+  // Función para renderizar contenido según el módulo 
   const renderContent = () => {
     switch (activeModule) {
       case 'inicio':
