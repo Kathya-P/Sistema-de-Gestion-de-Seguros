@@ -48,11 +48,11 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
   const getFilteredPolizas = () => {
     let polizasFiltradas = polizasReales; // Usar pólizas reales en lugar de props
     
-    // Si es cliente, solo mostrar sus propias pólizas
+    // Si es cliente, solo mostrar sus propias pólizas APROBADAS
     if (permissions?.isCliente && currentUser) {
       polizasFiltradas = polizasReales.filter(poliza => 
-        poliza.clienteId === currentUser.id || 
-        poliza.titular === currentUser.name
+        (poliza.clienteId === currentUser.id || poliza.titular === currentUser.name) &&
+        (poliza.estado === 'Activa' || poliza.estado === 'aprobada')
       );
     }
 

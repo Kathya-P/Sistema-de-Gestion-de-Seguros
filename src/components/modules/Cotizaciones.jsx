@@ -27,8 +27,8 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
 
   // Cargar cotizaciones del localStorage
   useEffect(() => {
-    const solicitudesGuardadas = JSON.parse(localStorage.getItem('solicitudes_cotizacion') || '[]');
-    setCotizaciones(solicitudesGuardadas);
+    const cotizacionesGuardadas = JSON.parse(localStorage.getItem('cotizaciones') || '[]');
+    setCotizaciones(cotizacionesGuardadas);
   }, [activeTab]);
 
   const [formData, setFormData] = useState({
@@ -172,9 +172,9 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
     };
 
     // Guardar en localStorage
-    const solicitudesExistentes = JSON.parse(localStorage.getItem('solicitudes_cotizacion') || '[]');
-    solicitudesExistentes.push(nuevaSolicitud);
-    localStorage.setItem('solicitudes_cotizacion', JSON.stringify(solicitudesExistentes));
+    const cotizacionesExistentes = JSON.parse(localStorage.getItem('cotizaciones') || '[]');
+    cotizacionesExistentes.push(nuevaSolicitud);
+    localStorage.setItem('cotizaciones', JSON.stringify(cotizacionesExistentes));
 
     // Mostrar resultado y limpiar formulario
     alert(`✅ Solicitud enviada exitosamente!\n\nPrima mensual estimada: $${primaMensual.toLocaleString()}\nPrima anual: $${primaAnual.toLocaleString()}\n\nRecibirá una respuesta en las próximas 24 horas.`);
@@ -234,19 +234,19 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
     };
 
     // Guardar póliza en localStorage
-    const polizasExistentes = JSON.parse(localStorage.getItem('polizas_vehiculares') || '[]');
+    const polizasExistentes = JSON.parse(localStorage.getItem('polizas') || '[]');
     const nuevasPolizas = [...polizasExistentes, nuevaPoliza];
-    localStorage.setItem('polizas_vehiculares', JSON.stringify(nuevasPolizas));
+    localStorage.setItem('polizas', JSON.stringify(nuevasPolizas));
 
-    // Actualizar estado de la solicitud en localStorage
-    const todasSolicitudes = JSON.parse(localStorage.getItem('solicitudes_cotizacion') || '[]');
-    const solicitudesActualizadas = todasSolicitudes.map(s => 
-      s.id === solicitud.id ? {...s, estado: 'aprobada', fechaAprobacion: new Date().toISOString().split('T')[0], numeroPoliza: numeroPoliza} : s
+    // Actualizar estado de la cotización en localStorage
+    const todasCotizaciones = JSON.parse(localStorage.getItem('cotizaciones') || '[]');
+    const cotizacionesActualizadas = todasCotizaciones.map(cot => 
+      cot.id === solicitud.id ? {...cot, estado: 'aprobada', fechaAprobacion: new Date().toISOString().split('T')[0], numeroPoliza: numeroPoliza} : cot
     );
-    localStorage.setItem('solicitudes_cotizacion', JSON.stringify(solicitudesActualizadas));
+    localStorage.setItem('cotizaciones', JSON.stringify(cotizacionesActualizadas));
     
     // Actualizar estado local
-    setCotizaciones(solicitudesActualizadas);
+    setCotizaciones(cotizacionesActualizadas);
     
     alert(`✅ Cotización aprobada y póliza ${numeroPoliza} creada para ${solicitud.nombreCompleto}`);
   };
@@ -255,14 +255,14 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
     const motivoRechazo = motivo || prompt('Motivo del rechazo (opcional):') || 'No especificado';
     
     // Actualizar estado en localStorage  
-    const todasSolicitudes = JSON.parse(localStorage.getItem('solicitudes_cotizacion') || '[]');
-    const solicitudesActualizadas = todasSolicitudes.map(s => 
-      s.id === solicitud.id ? {...s, estado: 'rechazada', fechaRechazo: new Date().toISOString().split('T')[0], motivoRechazo} : s
+    const todasCotizaciones = JSON.parse(localStorage.getItem('cotizaciones') || '[]');
+    const cotizacionesActualizadas = todasCotizaciones.map(cot => 
+      cot.id === solicitud.id ? {...cot, estado: 'rechazada', fechaRechazo: new Date().toISOString().split('T')[0], motivoRechazo} : cot
     );
-    localStorage.setItem('solicitudes_cotizacion', JSON.stringify(solicitudesActualizadas));
+    localStorage.setItem('cotizaciones', JSON.stringify(cotizacionesActualizadas));
     
     // Actualizar estado local
-    setCotizaciones(solicitudesActualizadas);
+    setCotizaciones(cotizacionesActualizadas);
     
     alert(`❌ Cotización rechazada para ${solicitud.nombreCompleto}`);
   };
