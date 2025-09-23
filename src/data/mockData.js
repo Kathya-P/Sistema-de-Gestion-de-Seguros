@@ -54,74 +54,8 @@ export const getMenuForRole = (userRole) => {
 // Menú de navegación (mantener compatibilidad)
 export const menuItems = allMenuItems;
 
-// Datos mock de pólizas vehiculares
-export const mockPolizas = [
-  {
-    numeroPoliza: 'VEH-001',
-    titular: 'Juan Pérez',
-    tipoSeguro: 'Seguro Completo',
-    vehiculo: 'Toyota Corolla 2020',
-    placa: 'ABC-123',
-    prima: 450,
-    vencimiento: '2025-12-15',
-    estado: 'Activa',
-    telefono: '+1234567890',
-    cobertura: 'Todo Riesgo',
-    deducible: 50000
-  },
-  {
-    numeroPoliza: 'VEH-002',
-    titular: 'María González',
-    tipoSeguro: 'Responsabilidad Civil',
-    vehiculo: 'Honda Civic 2019',
-    placa: 'XYZ-789',
-    prima: 280,
-    vencimiento: '2025-11-30',
-    estado: 'Activa',
-    telefono: '+1234567891',
-    cobertura: 'Daños a Terceros',
-    deducible: 30000
-  },
-  {
-    numeroPoliza: 'VEH-003',
-    titular: 'Carlos Ruiz',
-    tipoSeguro: 'Seguro Básico',
-    vehiculo: 'Nissan Sentra 2018',
-    placa: 'DEF-456',
-    prima: 320,
-    vencimiento: '2025-10-22',
-    estado: 'Pendiente',
-    telefono: '+1234567892',
-    cobertura: 'Robo y Daños Parciales',
-    deducible: 40000
-  },
-  {
-    numeroPoliza: 'VEH-004',
-    titular: 'Ana López',
-    tipoSeguro: 'Todo Riesgo Premium',
-    vehiculo: 'Mazda CX-5 2021',
-    placa: 'GHI-789',
-    prima: 680,
-    vencimiento: '2025-09-15',
-    estado: 'Vencida',
-    telefono: '+1234567893',
-    cobertura: 'Cobertura Amplia + Asistencia',
-    deducible: 75000
-  },
-  {
-    numeroPoliza: 'VEH-005',
-    titular: 'Roberto Silva',
-    tipoSeguro: 'Seguro Completo',
-    vehiculo: 'Chevrolet Spark 2020',
-    placa: 'JKL-012',
-    prima: 380,
-    vencimiento: '2026-01-10',
-    estado: 'Activa',
-    telefono: '+1234567894',
-    cobertura: 'Todo Riesgo',
-    deducible: 45000
-  }
-];
+// Datos mock de pólizas vehiculares - Array vacío para usar solo datos reales
+export const mockPolizas = [];
 
 // Datos mock de reclamos vehiculares
 export const mockReclamos = [

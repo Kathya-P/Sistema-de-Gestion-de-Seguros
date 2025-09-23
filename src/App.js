@@ -196,7 +196,7 @@ const SistemaSeguroVehicular = () => {
       case 'inicio':
         return <Inicio polizas={polizas} clientes={clientes} setActiveModule={handleModuleChange} permissions={permissions} currentUser={currentUser} />;
       case 'polizas':
-        return <Polizas polizas={polizas} setPolizas={setPolizas} permissions={permissions} />;
+        return <Polizas polizas={polizas} setPolizas={setPolizas} permissions={permissions} setActiveModule={handleModuleChange} />;
       case 'clientes':
         return <Clientes clientes={clientes} setClientes={setClientes} permissions={permissions} />;
       case 'cotizaciones':

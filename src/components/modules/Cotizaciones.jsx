@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Calculator, 
   DollarSign, 
@@ -11,56 +11,24 @@ import {
   Edit,
   Clock,
   CheckCircle,
-  XCircle
+  XCircle,
+  Car,
+  User,
+  Phone,
+  Mail
 } from 'lucide-react';
 
 const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
   const [activeTab, setActiveTab] = useState('lista');
   const [searchTerm, setSearchTerm] = useState('');
-  const [cotizaciones, setCotizaciones] = useState([
-    {
-      id: 1,
-      numero: 'COT-001',
-      cliente: 'María López',
-      vehiculo: 'Honda Civic 2020',
-      placa: 'ABC-123',
-      tipoSeguro: 'Todo Riesgo',
-      valorAsegurado: 25000,
-      prima: 850,
-      estado: 'Pendiente',
-      fechaSolicitud: '2024-09-18',
-      fechaVencimiento: '2024-10-18',
-      cobertura: 'Cobertura Completa + Asistencia'
-    },
-    {
-      id: 2,
-      numero: 'COT-002',
-      cliente: 'Carlos Rodríguez',
-      vehiculo: 'Toyota Corolla 2019',
-      placa: 'XYZ-789',
-      tipoSeguro: 'Responsabilidad Civil',
-      valorAsegurado: 20000,
-      prima: 450,
-      estado: 'Aprobada',
-      fechaSolicitud: '2024-09-15',
-      fechaVencimiento: '2024-10-15',
-      cobertura: 'Daños a Terceros'
-    },
-    {
-      id: 3,
-      numero: 'COT-003',
-      cliente: 'Ana Jiménez',
-      vehiculo: 'Nissan Sentra 2021',
-      placa: 'DEF-456',
-      tipoSeguro: 'Seguro Básico',
-      valorAsegurado: 22000,
-      prima: 580,
-      estado: 'Rechazada',
-      fechaSolicitud: '2024-09-10',
-      fechaVencimiento: '2024-10-10',
-      cobertura: 'Robo y Daños Parciales'
-    }
-  ]);
+  const [cotizaciones, setCotizaciones] = useState([]);
+  const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
+
+  // Cargar cotizaciones del localStorage
+  useEffect(() => {
+    const solicitudesGuardadas = JSON.parse(localStorage.getItem('solicitudes_cotizacion') || '[]');
+    setCotizaciones(solicitudesGuardadas);
+  }, [activeTab]);
 
   const [formData, setFormData] = useState({
     tipoSeguro: 'todo-riesgo',
@@ -72,7 +40,10 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
     deducible: '50000',
     edad: '',
     historialSiniestros: 'sin-siniestros',
-    añosLicencia: ''
+    añosLicencia: '',
+    nombreCompleto: '',
+    telefono: '',
+    email: ''
   });
 
   const handleInputChange = (e) => {
@@ -82,32 +53,199 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
     });
   };
 
+  const calcularPrima = (datos) => {
+    let prima = parseInt(datos.valorVehiculo) * 0.03; // Base 3% del valor
+
+    // Ajuste por tipo de cobertura
+    switch (datos.tipoSeguro) {
+      case 'todo-riesgo':
+        prima *= 1.0;
+        break;
+      case 'premium':
+        prima *= 1.3;
+        break;
+      case 'responsabilidad-civil':
+        prima *= 0.4;
+        break;
+      case 'basico':
+        prima *= 0.6;
+        break;
+    }
+
+    // Ajuste por edad
+    const edad = parseInt(datos.edad);
+    if (edad < 25) prima *= 1.4;
+    else if (edad > 65) prima *= 1.2;
+
+    // Ajuste por experiencia
+    switch (datos.añosLicencia) {
+      case 'menos-1':
+        prima *= 1.5;
+        break;
+      case '1-3':
+        prima *= 1.2;
+        break;
+      case '4-7':
+        prima *= 1.0;
+        break;
+      case '8-15':
+        prima *= 0.9;
+        break;
+      case 'mas-15':
+        prima *= 0.8;
+        break;
+    }
+
+    // Ajuste por historial
+    switch (datos.historialSiniestros) {
+      case 'sin-siniestros':
+        prima *= 0.9;
+        break;
+      case '1-siniestro':
+        prima *= 1.2;
+        break;
+      case '2-siniestros':
+        prima *= 1.5;
+        break;
+      case 'mas-siniestros':
+        prima *= 2.0;
+        break;
+    }
+
+    // Ajuste por deducible
+    const deducible = parseInt(datos.deducible);
+    if (deducible >= 100000) prima *= 0.85;
+    else if (deducible >= 75000) prima *= 0.9;
+    else if (deducible >= 50000) prima *= 0.95;
+
+    return Math.round(prima);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    handleCalcular(formData);
+    
+    // Validar campos requeridos
+    if (!formData.nombreCompleto || !formData.telefono || !formData.marca || 
+        !formData.modelo || !formData.año || !formData.placa || !formData.valorVehiculo || 
+        !formData.edad || !formData.añosLicencia) {
+      alert('Por favor complete todos los campos requeridos');
+      return;
+    }
+
+    // Calcular prima
+    const primaMensual = calcularPrima(formData);
+    const primaAnual = primaMensual * 12;
+
+    // Crear solicitud
+    const nuevaSolicitud = {
+      id: `SOL-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      nombreCompleto: formData.nombreCompleto,
+      telefono: formData.telefono,
+      email: formData.email,
+      marca: formData.marca,
+      modelo: formData.modelo,
+      año: formData.año,
+      placa: formData.placa.toUpperCase(),
+      valorVehiculo: parseInt(formData.valorVehiculo).toLocaleString(),
+      deducible: parseInt(formData.deducible),
+      edadConductor: formData.edad,
+      añosLicencia: formData.añosLicencia,
+      historialSiniestros: formData.historialSiniestros,
+      cobertura: getCoberturaTexto(formData.tipoSeguro),
+      primaMensual: primaMensual.toLocaleString(),
+      primaAnual: primaAnual.toLocaleString(),
+      estado: 'pendiente',
+      fechaSolicitud: new Date().toISOString().split('T')[0],
+      clienteId: permissions?.currentUser?.id || `CLI-${Date.now()}`
+    };
+
+    // Guardar en localStorage
+    const solicitudesExistentes = JSON.parse(localStorage.getItem('solicitudes_cotizacion') || '[]');
+    solicitudesExistentes.push(nuevaSolicitud);
+    localStorage.setItem('solicitudes_cotizacion', JSON.stringify(solicitudesExistentes));
+
+    // Mostrar resultado y limpiar formulario
+    alert(`✅ Solicitud enviada exitosamente!\n\nPrima mensual estimada: ₡${primaMensual.toLocaleString()}\nPrima anual: ₡${primaAnual.toLocaleString()}\n\nRecibirá una respuesta en las próximas 24 horas.`);
+    
+    setFormData({
+      tipoSeguro: 'todo-riesgo',
+      marca: '',
+      modelo: '',
+      año: '',
+      placa: '',
+      valorVehiculo: '',
+      deducible: '50000',
+      edad: '',
+      historialSiniestros: 'sin-siniestros',
+      añosLicencia: '',
+      nombreCompleto: '',
+      telefono: '',
+      email: ''
+    });
+
+    setActiveTab('lista');
   };
 
-  const handleApprove = (id) => {
-    setCotizaciones(prev => prev.map(cot => 
-      cot.id === id ? { ...cot, estado: 'Aprobada' } : cot
-    ));
+  const getCoberturaTexto = (tipo) => {
+    switch (tipo) {
+      case 'todo-riesgo':
+        return 'Todo Riesgo';
+      case 'premium':
+        return 'Todo Riesgo Premium';
+      case 'responsabilidad-civil':
+        return 'Responsabilidad Civil';
+      case 'basico':
+        return 'Seguro Básico';
+      default:
+        return tipo;
+    }
   };
 
-  const handleReject = (id) => {
-    setCotizaciones(prev => prev.map(cot => 
-      cot.id === id ? { ...cot, estado: 'Rechazada' } : cot
-    ));
+  const handleApprove = (solicitud) => {
+    // Actualizar estado en localStorage
+    const todasSolicitudes = JSON.parse(localStorage.getItem('solicitudes_cotizacion') || '[]');
+    const solicitudesActualizadas = todasSolicitudes.map(s => 
+      s.id === solicitud.id ? {...s, estado: 'aprobada', fechaAprobacion: new Date().toISOString().split('T')[0]} : s
+    );
+    localStorage.setItem('solicitudes_cotizacion', JSON.stringify(solicitudesActualizadas));
+    
+    // Actualizar estado local
+    setCotizaciones(solicitudesActualizadas);
+    
+    alert(`✅ Cotización aprobada para ${solicitud.nombreCompleto}`);
+  };
+
+  const handleReject = (solicitud, motivo = '') => {
+    const motivoRechazo = motivo || prompt('Motivo del rechazo (opcional):') || 'No especificado';
+    
+    // Actualizar estado en localStorage  
+    const todasSolicitudes = JSON.parse(localStorage.getItem('solicitudes_cotizacion') || '[]');
+    const solicitudesActualizadas = todasSolicitudes.map(s => 
+      s.id === solicitud.id ? {...s, estado: 'rechazada', fechaRechazo: new Date().toISOString().split('T')[0], motivoRechazo} : s
+    );
+    localStorage.setItem('solicitudes_cotizacion', JSON.stringify(solicitudesActualizadas));
+    
+    // Actualizar estado local
+    setCotizaciones(solicitudesActualizadas);
+    
+    alert(`❌ Cotización rechazada para ${solicitud.nombreCompleto}`);
+  };
+
+  const verDetalleSolicitud = (solicitud) => {
+    setSolicitudSeleccionada(solicitud);
   };
 
   const filteredCotizaciones = cotizaciones.filter(cot => {
-    const matchesSearch = cot.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         cot.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         cot.vehiculo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         cot.placa.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = cot.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         cot.nombreCompleto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         cot.marca?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         cot.modelo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         cot.placa?.toLowerCase().includes(searchTerm.toLowerCase());
     
     // Si es cliente, solo ver sus propias cotizaciones
-    if (permissions?.userRole === 'cliente') {
-      return matchesSearch && cot.cliente === 'María López'; // Simular usuario actual
+    if (permissions?.isCliente && permissions?.currentUser) {
+      return matchesSearch && (cot.nombreCompleto === permissions.currentUser.name || 
+                              cot.clienteId === permissions.currentUser.id);
     }
     
     return matchesSearch;
@@ -115,19 +253,28 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
 
   const getStatusColor = (estado) => {
     switch (estado) {
-      case 'Aprobada': return '#2d5016';
-      case 'Pendiente': return '#b7541a';
-      case 'Rechazada': return '#991b1b';
+      case 'aprobada': return '#2d5016';
+      case 'pendiente': return '#b7541a';
+      case 'rechazada': return '#991b1b';
       default: return '#6b7280';
     }
   };
 
   const getStatusIcon = (estado) => {
     switch (estado) {
-      case 'Aprobada': return <CheckCircle className="w-4 h-4" />;
-      case 'Pendiente': return <Clock className="w-4 h-4" />;
-      case 'Rechazada': return <XCircle className="w-4 h-4" />;
+      case 'aprobada': return <CheckCircle className="w-4 h-4" />;
+      case 'pendiente': return <Clock className="w-4 h-4" />;
+      case 'rechazada': return <XCircle className="w-4 h-4" />;
       default: return <FileText className="w-4 h-4" />;
+    }
+  };
+
+  const getStatusText = (estado) => {
+    switch (estado) {
+      case 'aprobada': return 'Aprobada';
+      case 'pendiente': return 'Pendiente';
+      case 'rechazada': return 'Rechazada';
+      default: return estado;
     }
   };
 
@@ -212,7 +359,7 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Cotización
+                      Solicitud
                     </th>
                     {permissions?.isAdmin && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -220,13 +367,13 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
                       </th>
                     )}
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Tipo de Seguro
+                      Vehículo
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Valor Asegurado
+                      Cobertura
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Prima
+                      Prima Mensual
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Estado
@@ -241,23 +388,35 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
                     <tr key={cotizacion.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{cotizacion.numero}</div>
+                          <div className="text-sm font-medium text-gray-900">#{cotizacion.id?.slice(-8)}</div>
                           <div className="text-sm text-gray-500">Solicitud: {cotizacion.fechaSolicitud}</div>
                         </div>
                       </td>
                       {permissions?.isAdmin && (
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{cotizacion.cliente}</div>
+                          <div className="flex items-center">
+                            <User className="w-4 h-4 mr-2 text-gray-400" />
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">{cotizacion.nombreCompleto}</div>
+                              <div className="text-sm text-gray-500">{cotizacion.telefono}</div>
+                            </div>
+                          </div>
                         </td>
                       )}
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{cotizacion.tipoSeguro}</div>
+                        <div className="flex items-center">
+                          <Car className="w-4 h-4 mr-2 text-gray-400" />
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">{cotizacion.marca} {cotizacion.modelo} {cotizacion.año}</div>
+                            <div className="text-sm text-gray-500">{cotizacion.placa}</div>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">${cotizacion.valorAsegurado.toLocaleString()}</div>
+                        <div className="text-sm text-gray-900">{cotizacion.cobertura}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">${cotizacion.prima}</div>
+                        <div className="text-sm font-medium text-green-600">₡{cotizacion.primaMensual}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span 
@@ -265,30 +424,33 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
                           style={{backgroundColor: getStatusColor(cotizacion.estado)}}
                         >
                           {getStatusIcon(cotizacion.estado)}
-                          <span className="ml-1">{cotizacion.estado}</span>
+                          <span className="ml-1">{getStatusText(cotizacion.estado)}</span>
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
-                          <button className="text-blue-600 hover:text-blue-900 transition-colors">
+                          <button 
+                            onClick={() => verDetalleSolicitud(cotizacion)}
+                            className="text-blue-600 hover:text-blue-900 transition-colors"
+                            title="Ver detalles"
+                          >
                             <Eye className="w-4 h-4" />
                           </button>
-                          {permissions?.isAdmin && cotizacion.estado === 'Pendiente' && (
+                          {permissions?.isAdmin && cotizacion.estado === 'pendiente' && (
                             <>
                               <button 
-                                onClick={() => handleApprove(cotizacion.id)}
+                                onClick={() => handleApprove(cotizacion)}
                                 className="text-green-600 hover:text-green-900 transition-colors"
+                                title="Aprobar cotización"
                               >
                                 <Check className="w-4 h-4" />
                               </button>
                               <button 
-                                onClick={() => handleReject(cotizacion.id)}
+                                onClick={() => handleReject(cotizacion)}
                                 className="text-red-600 hover:text-red-900 transition-colors"
+                                title="Rechazar cotización"
                               >
                                 <X className="w-4 h-4" />
-                              </button>
-                              <button className="text-orange-600 hover:text-orange-900 transition-colors">
-                                <Edit className="w-4 h-4" />
                               </button>
                             </>
                           )}
@@ -321,190 +483,261 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
           </h3>
           
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tipo de Cobertura Vehicular
-                </label>
-                <select
-                  name="tipoSeguro"
-                  value={formData.tipoSeguro}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="todo-riesgo">Todo Riesgo</option>
-                  <option value="responsabilidad-civil">Responsabilidad Civil</option>
-                  <option value="basico">Seguro Básico</option>
-                  <option value="premium">Todo Riesgo Premium</option>
-                </select>
-              </div>
+            {/* Información Personal */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">Información Personal</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nombre Completo *
+                  </label>
+                  <input
+                    type="text"
+                    name="nombreCompleto"
+                    value={formData.nombreCompleto}
+                    onChange={handleInputChange}
+                    placeholder="Nombre y apellidos completos"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Marca del Vehículo
-                </label>
-                <select
-                  name="marca"
-                  value={formData.marca}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                >
-                  <option value="">Seleccione marca</option>
-                  <option value="toyota">Toyota</option>
-                  <option value="honda">Honda</option>
-                  <option value="nissan">Nissan</option>
-                  <option value="mazda">Mazda</option>
-                  <option value="chevrolet">Chevrolet</option>
-                  <option value="hyundai">Hyundai</option>
-                  <option value="kia">Kia</option>
-                  <option value="ford">Ford</option>
-                </select>
-              </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Teléfono *
+                  </label>
+                  <input
+                    type="tel"
+                    name="telefono"
+                    value={formData.telefono}
+                    onChange={handleInputChange}
+                    placeholder="Ej: 8888-8888"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Modelo del Vehículo
-                </label>
-                <input
-                  type="text"
-                  name="modelo"
-                  value={formData.modelo}
-                  onChange={handleInputChange}
-                  placeholder="Ej: Corolla, Civic, Sentra"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Año del Vehículo
-                </label>
-                <select
-                  name="año"
-                  value={formData.año}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                >
-                  <option value="">Seleccione año</option>
-                  <option value="2024">2024</option>
-                  <option value="2023">2023</option>
-                  <option value="2022">2022</option>
-                  <option value="2021">2021</option>
-                  <option value="2020">2020</option>
-                  <option value="2019">2019</option>
-                  <option value="2018">2018</option>
-                  <option value="2017">2017</option>
-                  <option value="2016">2016</option>
-                  <option value="2015">2015</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Placa del Vehículo
-                </label>
-                <input
-                  type="text"
-                  name="placa"
-                  value={formData.placa}
-                  onChange={handleInputChange}
-                  placeholder="Ej: ABC-123"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Valor del Vehículo
-                </label>
-                <input
-                  type="number"
-                  name="valorVehiculo"
-                  value={formData.valorVehiculo}
-                  onChange={handleInputChange}
-                  placeholder="Valor comercial del vehículo"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Deducible
-                </label>
-                <select
-                  name="deducible"
-                  value={formData.deducible}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="30000">₡30,000</option>
-                  <option value="50000">₡50,000</option>
-                  <option value="75000">₡75,000</option>
-                  <option value="100000">₡100,000</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Edad del Conductor Principal
-                </label>
-                <input
-                  type="number"
-                  name="edad"
-                  value={formData.edad}
-                  onChange={handleInputChange}
-                  placeholder="Edad en años"
-                  min="18"
-                  max="80"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Años con Licencia de Conducir
-                </label>
-                <select
-                  name="añosLicencia"
-                  value={formData.añosLicencia}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                >
-                  <option value="">Seleccione experiencia</option>
-                  <option value="menos-1">Menos de 1 año</option>
-                  <option value="1-3">1 a 3 años</option>
-                  <option value="4-7">4 a 7 años</option>
-                  <option value="8-15">8 a 15 años</option>
-                  <option value="mas-15">Más de 15 años</option>
-                </select>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Correo Electrónico (Opcional)
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="correo@ejemplo.com"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Historial de Accidentes/Siniestros
-              </label>
-              <select
-                name="historialSiniestros"
-                value={formData.historialSiniestros}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="sin-siniestros">Sin accidentes/siniestros</option>
-                <option value="1-siniestro">1 accidente en los últimos 5 años</option>
-                <option value="2-siniestros">2 accidentes en los últimos 5 años</option>
-                <option value="mas-siniestros">Más de 2 accidentes</option>
-              </select>
+            {/* Información del Vehículo */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">Información del Vehículo</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Tipo de Cobertura Vehicular *
+                  </label>
+                  <select
+                    name="tipoSeguro"
+                    value={formData.tipoSeguro}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="todo-riesgo">Todo Riesgo</option>
+                    <option value="responsabilidad-civil">Responsabilidad Civil</option>
+                    <option value="basico">Seguro Básico</option>
+                    <option value="premium">Todo Riesgo Premium</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Marca del Vehículo *
+                  </label>
+                  <select
+                    name="marca"
+                    value={formData.marca}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">Seleccione marca</option>
+                    <option value="Toyota">Toyota</option>
+                    <option value="Honda">Honda</option>
+                    <option value="Nissan">Nissan</option>
+                    <option value="Mazda">Mazda</option>
+                    <option value="Chevrolet">Chevrolet</option>
+                    <option value="Hyundai">Hyundai</option>
+                    <option value="Kia">Kia</option>
+                    <option value="Ford">Ford</option>
+                    <option value="Mitsubishi">Mitsubishi</option>
+                    <option value="Suzuki">Suzuki</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Modelo del Vehículo *
+                  </label>
+                  <input
+                    type="text"
+                    name="modelo"
+                    value={formData.modelo}
+                    onChange={handleInputChange}
+                    placeholder="Ej: Corolla, Civic, Sentra"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Año del Vehículo *
+                  </label>
+                  <select
+                    name="año"
+                    value={formData.año}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">Seleccione año</option>
+                    <option value="2024">2024</option>
+                    <option value="2023">2023</option>
+                    <option value="2022">2022</option>
+                    <option value="2021">2021</option>
+                    <option value="2020">2020</option>
+                    <option value="2019">2019</option>
+                    <option value="2018">2018</option>
+                    <option value="2017">2017</option>
+                    <option value="2016">2016</option>
+                    <option value="2015">2015</option>
+                    <option value="2014">2014</option>
+                    <option value="2013">2013</option>
+                    <option value="2012">2012</option>
+                    <option value="2011">2011</option>
+                    <option value="2010">2010</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Placa del Vehículo *
+                  </label>
+                  <input
+                    type="text"
+                    name="placa"
+                    value={formData.placa}
+                    onChange={handleInputChange}
+                    placeholder="Ej: ABC-123"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Valor Comercial del Vehículo (₡) *
+                  </label>
+                  <input
+                    type="number"
+                    name="valorVehiculo"
+                    value={formData.valorVehiculo}
+                    onChange={handleInputChange}
+                    placeholder="Ej: 15000000"
+                    min="1000000"
+                    max="100000000"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                  <p className="text-sm text-gray-500 mt-1">Valor actual de mercado del vehículo</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Deducible Preferido
+                  </label>
+                  <select
+                    name="deducible"
+                    value={formData.deducible}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="30000">₡30,000 (Prima más alta)</option>
+                    <option value="50000">₡50,000 (Recomendado)</option>
+                    <option value="75000">₡75,000</option>
+                    <option value="100000">₡100,000 (Prima más baja)</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
-            <div className="flex justify-end space-x-4">
+            {/* Información del Conductor */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">Información del Conductor Principal</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Edad del Conductor Principal *
+                  </label>
+                  <input
+                    type="number"
+                    name="edad"
+                    value={formData.edad}
+                    onChange={handleInputChange}
+                    placeholder="Edad en años"
+                    min="18"
+                    max="80"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Años con Licencia de Conducir *
+                  </label>
+                  <select
+                    name="añosLicencia"
+                    value={formData.añosLicencia}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">Seleccione experiencia</option>
+                    <option value="menos-1">Menos de 1 año</option>
+                    <option value="1-3">1 a 3 años</option>
+                    <option value="4-7">4 a 7 años</option>
+                    <option value="8-15">8 a 15 años</option>
+                    <option value="mas-15">Más de 15 años</option>
+                  </select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Historial de Accidentes/Siniestros
+                  </label>
+                  <select
+                    name="historialSiniestros"
+                    value={formData.historialSiniestros}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="sin-siniestros">Sin accidentes/siniestros</option>
+                    <option value="1-siniestro">1 accidente en los últimos 5 años</option>
+                    <option value="2-siniestros">2 accidentes en los últimos 5 años</option>
+                    <option value="mas-siniestros">Más de 2 accidentes</option>
+                  </select>
+                  <p className="text-sm text-gray-500 mt-1">Un historial limpio de conducción reduce significativamente la prima</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
               <button
                 type="button"
                 onClick={() => setActiveTab('lista')}
@@ -514,30 +747,212 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
               >
-                Solicitar Cotización
+                <Calculator className="w-4 h-4 mr-2" />
+                Enviar Solicitud de Cotización
               </button>
             </div>
           </form>
-
-          {resultadoCotizacion && (
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h4 className="text-lg font-semibold text-blue-900 mb-2">Resultado de la Cotización</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="text-blue-700 font-medium">Prima Mensual:</span>
-                  <span className="text-blue-900 ml-2">${resultadoCotizacion.primaMensual}</span>
-                </div>
-                <div>
-                  <span className="text-blue-700 font-medium">Prima Anual:</span>
-                  <span className="text-blue-900 ml-2">${resultadoCotizacion.primaAnual}</span>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       ) : null}
+
+      {/* Modal de Detalles de la Solicitud */}
+      {solicitudSeleccionada && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Detalles de la Cotización
+                </h3>
+                <button
+                  onClick={() => setSolicitudSeleccionada(null)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Estado y ID */}
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="text-sm text-gray-500">ID de Solicitud</p>
+                    <p className="font-medium">#{solicitudSeleccionada.id?.slice(-8)}</p>
+                  </div>
+                  <div>
+                    <span 
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white"
+                      style={{backgroundColor: getStatusColor(solicitudSeleccionada.estado)}}
+                    >
+                      {getStatusIcon(solicitudSeleccionada.estado)}
+                      <span className="ml-2">{getStatusText(solicitudSeleccionada.estado)}</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Información Personal */}
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <User className="w-5 h-5 mr-2" />
+                    Información Personal
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500">Nombre Completo</p>
+                      <p className="font-medium">{solicitudSeleccionada.nombreCompleto}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Teléfono</p>
+                      <p className="font-medium flex items-center">
+                        <Phone className="w-4 h-4 mr-1" />
+                        {solicitudSeleccionada.telefono}
+                      </p>
+                    </div>
+                    {solicitudSeleccionada.email && (
+                      <div className="md:col-span-2">
+                        <p className="text-sm text-gray-500">Correo Electrónico</p>
+                        <p className="font-medium flex items-center">
+                          <Mail className="w-4 h-4 mr-1" />
+                          {solicitudSeleccionada.email}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Información del Vehículo */}
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Car className="w-5 h-5 mr-2" />
+                    Información del Vehículo
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500">Vehículo</p>
+                      <p className="font-medium">{solicitudSeleccionada.marca} {solicitudSeleccionada.modelo} {solicitudSeleccionada.año}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Placa</p>
+                      <p className="font-medium">{solicitudSeleccionada.placa}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Valor del Vehículo</p>
+                      <p className="font-medium">₡{solicitudSeleccionada.valorVehiculo}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Deducible</p>
+                      <p className="font-medium">₡{solicitudSeleccionada.deducible?.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Información del Conductor */}
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                    Información del Conductor
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500">Edad</p>
+                      <p className="font-medium">{solicitudSeleccionada.edadConductor} años</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Años con Licencia</p>
+                      <p className="font-medium">{solicitudSeleccionada.añosLicencia}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Historial</p>
+                      <p className="font-medium">{solicitudSeleccionada.historialSiniestros}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Información de la Cotización */}
+                <div className="border border-green-200 rounded-lg p-4 bg-green-50">
+                  <h4 className="text-lg font-semibold text-green-900 mb-4 flex items-center">
+                    <Calculator className="w-5 h-5 mr-2" />
+                    Cotización
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-sm text-green-700">Cobertura</p>
+                      <p className="font-semibold text-green-900">{solicitudSeleccionada.cobertura}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-green-700">Prima Mensual</p>
+                      <p className="font-semibold text-green-900">₡{solicitudSeleccionada.primaMensual}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-green-700">Prima Anual</p>
+                      <p className="font-semibold text-green-900">₡{solicitudSeleccionada.primaAnual}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Fechas */}
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                    Historial
+                  </h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Fecha de Solicitud:</span>
+                      <span className="font-medium">{solicitudSeleccionada.fechaSolicitud}</span>
+                    </div>
+                    {solicitudSeleccionada.fechaAprobacion && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Fecha de Aprobación:</span>
+                        <span className="font-medium text-green-600">{solicitudSeleccionada.fechaAprobacion}</span>
+                      </div>
+                    )}
+                    {solicitudSeleccionada.fechaRechazo && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Fecha de Rechazo:</span>
+                        <span className="font-medium text-red-600">{solicitudSeleccionada.fechaRechazo}</span>
+                      </div>
+                    )}
+                    {solicitudSeleccionada.motivoRechazo && (
+                      <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded">
+                        <p className="text-sm text-red-700">
+                          <strong>Motivo del rechazo:</strong> {solicitudSeleccionada.motivoRechazo}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Botones de acción para admin */}
+                {permissions?.isAdmin && solicitudSeleccionada.estado === 'pendiente' && (
+                  <div className="flex space-x-4 pt-4 border-t border-gray-200">
+                    <button
+                      onClick={() => {
+                        handleApprove(solicitudSeleccionada);
+                        setSolicitudSeleccionada(null);
+                      }}
+                      className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+                    >
+                      <Check className="w-4 h-4 mr-2" />
+                      Aprobar Cotización
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleReject(solicitudSeleccionada);
+                        setSolicitudSeleccionada(null);
+                      }}
+                      className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Rechazar Cotización
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
