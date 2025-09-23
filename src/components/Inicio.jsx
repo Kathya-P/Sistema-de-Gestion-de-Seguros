@@ -41,19 +41,19 @@ const Inicio = ({
     }
   };
 
-  // Renderizar dashboard según el rol
-  const renderDashboardByRole = () => {
+  // Renderizar contenido según el rol
+  const renderContentByRole = () => {
     if (permissions.isAdmin) {
-      return renderAdminDashboard();
+      return renderAdminContent();
     } else if (permissions.isCliente) {
-      return renderClienteDashboard();
+      return renderClienteContent();
     } else {
-      return renderDefaultDashboard();
+      return renderDefaultContent();
     }
   };
 
-  // Dashboard para ADMINISTRADOR
-  const renderAdminDashboard = () => (
+  // Contenido para ADMINISTRADOR
+  const renderAdminContent = () => (
     <div className="space-y-8">
       {/* Header Administrador */}
       <div className="bg-gradient-to-r from-slate-50 to-gray-100 rounded-xl shadow-md border border-slate-200 p-10">
@@ -63,7 +63,7 @@ const Inicio = ({
               <Shield className="w-14 h-14" style={{color: '#1e3a72'}} />
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-gray-900">Dashboard Vehicular</h1>
+              <h1 className="text-4xl font-bold text-gray-900">Inicio</h1>
               <p className="text-lg text-slate-600 mt-1">Panel de control de seguros vehiculares</p>
             </div>
           </div>
@@ -196,8 +196,8 @@ const Inicio = ({
     </div>
   );
 
-  // Dashboard para CLIENTE
-  const renderClienteDashboard = () => (
+  // Contenido para CLIENTE
+  const renderClienteContent = () => (
     <div className="space-y-8">
       {/* Header Cliente */}
       <div className="bg-gradient-to-r from-slate-50 to-gray-100 rounded-xl shadow-md border border-slate-200 p-10">
@@ -395,8 +395,8 @@ const Inicio = ({
     </div>
   );
 
-  // Dashboard por defecto (fallback)
-  const renderDefaultDashboard = () => (
+  // Contenido por defecto (fallback)
+  const renderDefaultContent = () => (
     <div className="space-y-8">
       <div className="bg-gradient-to-r from-slate-50 to-gray-100 rounded-xl shadow-md border border-slate-200 p-10">
         <div className="text-center">
@@ -420,7 +420,7 @@ const Inicio = ({
 
   return (
     <>
-      {renderDashboardByRole()}
+      {renderContentByRole()}
       
       {/* Footer común */}
       <div className="bg-gradient-to-r from-slate-50 to-gray-100 rounded-xl p-6 border border-gray-200 mt-8">

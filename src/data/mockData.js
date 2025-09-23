@@ -36,7 +36,7 @@ export const users = [
 
 // Menú de navegación enfocado en seguros vehiculares
 export const allMenuItems = [
-  { id: 'inicio', label: 'Dashboard', icon: Home, roles: ['admin', 'agente', 'cliente'] },
+  { id: 'inicio', label: 'Inicio', icon: Home, roles: ['admin', 'agente', 'cliente'] },
   { id: 'polizas', label: 'Pólizas Vehiculares', icon: FileText, roles: ['admin', 'agente', 'cliente'] },
   { id: 'clientes', label: 'Propietarios', icon: Users, roles: ['admin'] }, // Solo admin
   { id: 'cotizaciones', label: 'Cotizar Seguro', icon: Calculator, roles: ['admin', 'agente', 'cliente'] },
@@ -261,7 +261,7 @@ export const mockClientes = [
 // Función para obtener el título de la página
 export const getPageTitle = (activeModule) => {
   const titles = {
-    inicio: 'Dashboard Vehicular',
+    inicio: 'Inicio',
     polizas: 'Pólizas Vehiculares',
     clientes: 'Propietarios de Vehículos',
     cotizaciones: 'Cotizar Seguro Vehicular',

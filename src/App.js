@@ -303,7 +303,7 @@ const SistemaSeguroVehicular = () => {
                   <Shield className="w-6 h-6" style={{color: '#1e3a72'}} />
                 </div>
                 <div>
-                  <h1>SecureAuto Pro</h1>
+                  <h1>SecureTech</h1>
                 </div>
               </div>
 

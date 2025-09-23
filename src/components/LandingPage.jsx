@@ -25,7 +25,7 @@ const LandingPage = ({ onShowLogin, onShowRegister }) => {
                 <Shield className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">SecureTech Solutions</h1>
+                <h1 className="text-2xl font-bold text-gray-900">SecureTech</h1>
                 <p className="text-sm text-gray-600">Tu seguridad es nuestra prioridad</p>
               </div>
             </div>
@@ -189,7 +189,7 @@ const LandingPage = ({ onShowLogin, onShowRegister }) => {
                   <Shield className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold">SecureTech Solutions</h3>
+                  <h3 className="text-xl font-bold">SecureTech</h3>
                   <p className="text-gray-400">Tu seguridad es nuestra prioridad</p>
                 </div>
               </div>
@@ -246,7 +246,7 @@ const LandingPage = ({ onShowLogin, onShowRegister }) => {
 
           <div className="border-t border-gray-800 mt-8 pt-8 text-center">
             <p className="text-gray-400">
-              © 2025 SecureTech Solutions. Todos los derechos reservados.
+              © 2025 SecureTech. Todos los derechos reservados.
             </p>
           </div>
         </div>

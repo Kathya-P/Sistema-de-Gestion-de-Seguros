@@ -17,6 +17,7 @@ const AuthComponent = ({ onLogin, onRegister }) => {
     username: '',
     email: '',
     phone: '',
+    address: '',
     password: '',
     confirmPassword: '',
     role: 'cliente'
@@ -63,6 +64,7 @@ const AuthComponent = ({ onLogin, onRegister }) => {
           username: '',
           email: '',
           phone: '',
+          address: '',
           password: '',
           confirmPassword: '',
           role: 'cliente'
@@ -229,6 +231,20 @@ const AuthComponent = ({ onLogin, onRegister }) => {
                   required
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Dirección
+              </label>
+              <input
+                type="text"
+                value={registerData.address}
+                onChange={(e) => setRegisterData({...registerData, address: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ej: San José, Escazú, 200m sur del parque"
+                required
+              />
             </div>
 
             <div>
