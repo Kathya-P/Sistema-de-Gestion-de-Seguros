@@ -153,7 +153,8 @@ export const userManager = {
         name: userData.name,
         email: userData.email,
         phone: userData.phone,
-        role: userData.role === 'admin' ? 'Administrador' : 'Agente de Seguros',
+        role: userData.role === 'admin' ? 'Administrador' : 
+              userData.role === 'agente' ? 'Agente de Seguros' : 'Cliente',
         rol: userData.role,
         createdAt: new Date().toISOString()
       };
@@ -186,11 +187,12 @@ export const usePermissions = () => {
   const currentUser = sessionManager.getCurrentUser();
   
   return {
-    canCreate: currentUser !== null,
-    canEdit: currentUser !== null,
+    canCreate: currentUser && (currentUser.rol === 'admin' || currentUser.rol === 'agente'),
+    canEdit: currentUser && (currentUser.rol === 'admin' || currentUser.rol === 'agente'),
     canDelete: currentUser && (currentUser.rol === 'admin'),
-    canViewReports: currentUser !== null,
+    canViewReports: currentUser && (currentUser.rol === 'admin' || currentUser.rol === 'agente'),
     canManageUsers: currentUser && (currentUser.rol === 'admin'),
+    canViewOwnData: currentUser !== null, // Todos los usuarios logueados pueden ver sus propios datos
     isLoggedIn: currentUser !== null,
     userRole: currentUser ? currentUser.rol : 'guest'
   };

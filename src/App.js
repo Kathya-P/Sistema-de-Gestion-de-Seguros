@@ -4,6 +4,7 @@ import { Shield, User, LogOut } from 'lucide-react';
 
 // Importar componentes
 import Login from './components/auth/Login';
+import LandingPage from './components/LandingPage';
 import Inicio from './components/Inicio';
 import Cotizaciones from './components/modules/Cotizaciones';
 import Polizas from './components/modules/Polizas';
@@ -23,6 +24,7 @@ const SistemaGestionSeguros = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
+  const [showLandingPage, setShowLandingPage] = useState(true);
 
   // Estados principales
   const [activeModule, setActiveModule] = useState('inicio');
@@ -40,6 +42,7 @@ const SistemaGestionSeguros = () => {
     if (savedSession) {
       setIsAuthenticated(true);
       setCurrentUser(savedSession.user);
+      setShowLandingPage(false); // Si hay sesión activa, ir directamente a la app
       console.log('🔄 Sesión restaurada:', savedSession.user);
     }
   }, []);
@@ -51,6 +54,7 @@ const SistemaGestionSeguros = () => {
       setIsAuthenticated(true);
       setCurrentUser(user);
       setShowLogin(false);
+      setShowLandingPage(false); // Solo ocultar landing page después del login exitoso
       
       // Guardar sesión
       sessionManager.saveSession(user);
@@ -62,6 +66,10 @@ const SistemaGestionSeguros = () => {
 
   const handleRegister = (userData) => {
     const success = userManager.registerUser(userData);
+    if (success) {
+      // Después del registro exitoso, el usuario puede hacer login inmediatamente
+      // La landing page se mantiene visible hasta que haga login
+    }
     return success;
   };
 
@@ -69,6 +77,7 @@ const SistemaGestionSeguros = () => {
     setIsAuthenticated(false);
     setCurrentUser(null);
     setActiveModule('inicio');
+    setShowLandingPage(true);
     
     // Limpiar sesión guardada
     sessionManager.clearSession();
@@ -77,10 +86,17 @@ const SistemaGestionSeguros = () => {
 
   const handleLoginClick = () => {
     setShowLogin(true);
+    // Mantener la landing page visible
+  };
+
+  const handleShowRegister = () => {
+    setShowLogin(true);
+    // Mantener la landing page visible
   };
 
   const handleCloseLogin = () => {
     setShowLogin(false);
+    // La landing page se mantiene visible si no está autenticado
   };
 
   // Función para calcular cotizaciones
@@ -154,7 +170,15 @@ const SistemaGestionSeguros = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Modal de Login/Registro */}
+      {/* Mostrar Landing Page como primera pantalla */}
+      {showLandingPage && (
+        <LandingPage 
+          onShowLogin={handleLoginClick}
+          onShowRegister={handleShowRegister}
+        />
+      )}
+
+      {/* Modal de Login/Registro - Se muestra sobre la landing page */}
       {showLogin && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
@@ -169,78 +193,83 @@ const SistemaGestionSeguros = () => {
         </div>
       )}
 
-      {/* Contenido principal - Siempre visible */}
-      <div className="flex">
-        {/* Sidebar izquierdo */}
-        <div className="sidebar">
-          <div className="logo">
-            <div className="user-logo">
-              <Shield className="w-6 h-6" style={{color: '#1e3a72'}} />
+      {/* Mostrar aplicación principal solo cuando no es landing page */}
+      {!showLandingPage && (
+        <>
+          {/* Contenido principal - Sistema */}
+          <div className="flex">
+            {/* Sidebar izquierdo */}
+            <div className="sidebar">
+              <div className="logo">
+                <div className="user-logo">
+                  <Shield className="w-6 h-6" style={{color: '#1e3a72'}} />
+                </div>
+                <div>
+                  <h1>SecureTech Solutions</h1>
+                </div>
+              </div>
+
+              {/* Navegación */}
+              <nav className="nav-menu">
+                <ul className="nav-list">
+                  {menuItems.map((item) => (
+                    <li key={item.id} className="nav-item">
+                      <button
+                        onClick={() => setActiveModule(item.id)}
+                        className={`nav-button ${activeModule === item.id ? 'active' : ''}`}
+                      >
+                        <item.icon className="w-5 h-5" />
+                        <span>{item.label}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+
+              {/* Footer del sidebar */}
+              <div className="sidebar-footer">
+                {isAuthenticated ? (
+                  <div className="user-info-sidebar">
+                    <div className="user-avatar">
+                      <User className="w-5 h-5" />
+                    </div>
+                    <div className="user-details">
+                      <p className="user-name">{currentUser?.name}</p>
+                      <p className="user-role">{currentUser?.role}</p>
+                    </div>
+                    <button 
+                      onClick={handleLogout}
+                      className="logout-btn"
+                      title="Cerrar sesión"
+                    >
+                      <LogOut className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="guest-login-sidebar p-4">
+                    <button 
+                      onClick={handleLoginClick}
+                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center justify-center"
+                    >
+                      <Shield className="w-4 h-4 mr-2" />
+                      Iniciar Sesión
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-            <div>
-              <h1>SecureTech Solutions</h1>
+
+            {/* Main Content */}
+            <div className="main-content">
+              {/* Banner para usuarios invitados */}
+              {!isAuthenticated && <GuestBanner onLoginClick={handleLoginClick} />}
+              
+              {/* Contenido principal */}
+              {renderContent()}
             </div>
           </div>
-
-          {/* Navegación */}
-          <nav className="nav-menu">
-            <ul className="nav-list">
-              {menuItems.map((item) => (
-                <li key={item.id} className="nav-item">
-                  <button
-                    onClick={() => setActiveModule(item.id)}
-                    className={`nav-button ${activeModule === item.id ? 'active' : ''}`}
-                  >
-                    <item.icon className="w-5 h-5" />
-                    <span>{item.label}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </nav>
-
-          {/* Footer del sidebar */}
-          <div className="sidebar-footer">
-            {isAuthenticated ? (
-              <div className="user-info-sidebar">
-                <div className="user-avatar">
-                  <User className="w-5 h-5" />
-                </div>
-                <div className="user-details">
-                  <p className="user-name">{currentUser?.name}</p>
-                  <p className="user-role">{currentUser?.role}</p>
-                </div>
-                <button 
-                  onClick={handleLogout}
-                  className="logout-btn"
-                  title="Cerrar sesión"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="guest-login-sidebar p-4">
-                <button 
-                  onClick={handleLoginClick}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center justify-center"
-                >
-                  <Shield className="w-4 h-4 mr-2" />
-                  Iniciar Sesión
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="main-content">
-          {/* Banner para usuarios invitados */}
-          {!isAuthenticated && <GuestBanner onLoginClick={handleLoginClick} />}
-          
-          {/* Contenido principal */}
-          {renderContent()}
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 };
