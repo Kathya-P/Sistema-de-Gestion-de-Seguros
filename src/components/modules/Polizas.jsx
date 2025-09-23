@@ -21,35 +21,38 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
   const [activeTab, setActiveTab] = useState('polizas');
   const [solicitudesPendientes, setSolicitudesPendientes] = useState([]);
   const [polizasReales, setPolizasReales] = useState([]); // Solo pólizas reales del localStorage
+  
+  // Obtener usuario actual
+  const currentUser = permissions?.currentUser || JSON.parse(localStorage.getItem('seguros_session_data') || '{}').user;
 
   // Cargar solicitudes pendientes y pólizas reales del localStorage
   useEffect(() => {
-    const solicitudes = JSON.parse(localStorage.getItem('solicitudes_cotizacion') || '[]');
-    setSolicitudesPendientes(solicitudes.filter(s => s.estado === 'pendiente'));
+    // Cargar cotizaciones pendientes de aprobación
+    const cotizaciones = JSON.parse(localStorage.getItem('cotizaciones') || '[]');
+    setSolicitudesPendientes(cotizaciones.filter(cot => cot.estado === 'pendiente'));
     
-    // Cargar pólizas del localStorage y combinar con las del estado inicial
-    const polizasGuardadas = JSON.parse(localStorage.getItem('polizas_vehiculares') || '[]');
-    
-    // Combinar pólizas iniciales con las creadas desde cotizaciones
-    const todasLasPolizas = [...polizas, ...polizasGuardadas];
-    
-    // Eliminar duplicados basados en numeroPoliza
-    const polizasUnicas = todasLasPolizas.filter((poliza, index, self) => 
-      index === self.findIndex(p => p.numeroPoliza === poliza.numeroPoliza)
-    );
-    
-    setPolizasReales(polizasUnicas);
-  }, [polizas]);
+    // Cargar SOLO las pólizas reales del localStorage (creadas desde cotizaciones aprobadas)
+    const polizasGuardadas = JSON.parse(localStorage.getItem('polizas') || '[]');
+    setPolizasReales(polizasGuardadas);
+  }, []);
+
+  // Actualizar pólizas cuando cambie la pestaña activa (para refrescar datos)
+  useEffect(() => {
+    if (activeTab === 'polizas') {
+      const polizasGuardadas = JSON.parse(localStorage.getItem('polizas') || '[]');
+      setPolizasReales(polizasGuardadas);
+    }
+  }, [activeTab]);
 
   // Filtrar pólizas según permisos del usuario
   const getFilteredPolizas = () => {
     let polizasFiltradas = polizasReales; // Usar pólizas reales en lugar de props
     
     // Si es cliente, solo mostrar sus propias pólizas
-    if (permissions?.isCliente && permissions?.currentUser) {
+    if (permissions?.isCliente && currentUser) {
       polizasFiltradas = polizasReales.filter(poliza => 
-        poliza.titular === permissions.currentUser.name || 
-        poliza.clienteId === permissions.currentUser.id
+        poliza.clienteId === currentUser.id || 
+        poliza.titular === currentUser.name
       );
     }
 
@@ -67,10 +70,12 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
 
   // Aprobar solicitud de cotización y convertir en póliza
   const aprobarSolicitud = (solicitud) => {
+    const numeroPoliza = `POL-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
     const nuevaPoliza = {
-      numeroPoliza: `VEH-${Date.now()}`,
+      numeroPoliza: numeroPoliza,
       titular: solicitud.nombreCompleto,
-      clienteId: solicitud.clienteId,
+      clienteId: solicitud.clienteId || solicitud.userId, // Asegurar ID del cliente
+      clienteName: solicitud.clienteName || solicitud.nombreCompleto, // Nombre del cliente
       tipoSeguro: solicitud.cobertura,
       vehiculo: `${solicitud.marca} ${solicitud.modelo} ${solicitud.año}`,
       placa: solicitud.placa,
@@ -79,41 +84,41 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
       estado: 'Activa',
       telefono: solicitud.telefono,
       cobertura: solicitud.cobertura,
-      deducible: solicitud.deducible || 50000,
+      deducible: solicitud.deducible || 750,
       fechaCreacion: new Date().toISOString().split('T')[0],
       solicitudId: solicitud.id
     };
 
     // Guardar póliza en localStorage
-    const polizasExistentes = JSON.parse(localStorage.getItem('polizas_vehiculares') || '[]');
+    const polizasExistentes = JSON.parse(localStorage.getItem('polizas') || '[]');
     const nuevasPolizas = [...polizasExistentes, nuevaPoliza];
-    localStorage.setItem('polizas_vehiculares', JSON.stringify(nuevasPolizas));
+    localStorage.setItem('polizas', JSON.stringify(nuevasPolizas));
     
     // Actualizar estado local y también el estado principal de App.js
     setPolizasReales(nuevasPolizas);
     setPolizas(nuevasPolizas); // Actualizar también el estado principal
 
-    // Actualizar estado de la solicitud en localStorage
-    const todasSolicitudes = JSON.parse(localStorage.getItem('solicitudes_cotizacion') || '[]');
-    const solicitudesNuevas = todasSolicitudes.map(s => 
-      s.id === solicitud.id ? {...s, estado: 'aprobada', numeroPoliza: nuevaPoliza.numeroPoliza} : s
+    // Actualizar estado de la cotización en localStorage
+    const todasCotizaciones = JSON.parse(localStorage.getItem('cotizaciones') || '[]');
+    const cotizacionesNuevas = todasCotizaciones.map(cot => 
+      cot.id === solicitud.id ? {...cot, estado: 'aprobada', numeroPoliza: numeroPoliza} : cot
     );
-    localStorage.setItem('solicitudes_cotizacion', JSON.stringify(solicitudesNuevas));
+    localStorage.setItem('cotizaciones', JSON.stringify(cotizacionesNuevas));
     
     // Actualizar estado local
     setSolicitudesPendientes(prev => prev.filter(s => s.id !== solicitud.id));
     
-    alert(`✅ Póliza ${nuevaPoliza.numeroPoliza} creada exitosamente`);
+    alert(`✅ Póliza ${numeroPoliza} creada exitosamente`);
   };
 
   // Rechazar solicitud
   const rechazarSolicitud = (solicitudId, motivo = '') => {
     // Actualizar localStorage
-    const todasSolicitudes = JSON.parse(localStorage.getItem('solicitudes_cotizacion') || '[]');
-    const solicitudesNuevas = todasSolicitudes.map(s => 
-      s.id === solicitudId ? {...s, estado: 'rechazada', motivoRechazo: motivo} : s
+    const todasCotizaciones = JSON.parse(localStorage.getItem('cotizaciones') || '[]');
+    const cotizacionesNuevas = todasCotizaciones.map(cot => 
+      cot.id === solicitudId ? {...cot, estado: 'rechazada', motivoRechazo: motivo} : cot
     );
-    localStorage.setItem('solicitudes_cotizacion', JSON.stringify(solicitudesNuevas));
+    localStorage.setItem('cotizaciones', JSON.stringify(cotizacionesNuevas));
     
     // Actualizar estado local
     setSolicitudesPendientes(prev => prev.filter(s => s.id !== solicitudId));
@@ -157,7 +162,7 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">{solicitud.nombreCompleto}</h3>
-                    <p className="text-sm text-gray-500">Solicitud #{solicitud.id?.slice(-8)}</p>
+                    <p className="text-sm text-gray-500">{solicitud.id}</p>
                   </div>
                 </div>
 
@@ -176,7 +181,7 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Prima Mensual</p>
-                    <p className="font-medium text-green-600">₡{solicitud.primaMensual}</p>
+                    <p className="font-medium text-green-600">${solicitud.primaMensual}</p>
                   </div>
                 </div>
 
@@ -431,7 +436,7 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
                         <span className="text-sm text-gray-900">{poliza.cobertura || poliza.tipoSeguro}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">₡{poliza.prima}</div>
+                        <div className="text-sm text-gray-900">${poliza.prima}</div>
                         <div className="text-sm text-gray-500">mensual</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

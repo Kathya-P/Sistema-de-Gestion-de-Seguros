@@ -54,39 +54,8 @@ export const getMenuForRole = (userRole) => {
 // Menú de navegación (mantener compatibilidad)
 export const menuItems = allMenuItems;
 
-// Datos mock de pólizas vehiculares - Algunos datos iniciales
-export const mockPolizas = [
-  {
-    numeroPoliza: 'VEH-001',
-    titular: 'Juan Pérez',
-    tipoSeguro: 'Todo Riesgo',
-    vehiculo: 'Toyota Corolla 2020',
-    placa: 'ABC-123',
-    prima: 450,
-    vencimiento: '2025-12-15',
-    estado: 'Activa',
-    telefono: '+1234567890',
-    cobertura: 'Todo Riesgo',
-    deducible: 50000,
-    fechaCreacion: '2024-09-15',
-    clienteId: 'CLI-001'
-  },
-  {
-    numeroPoliza: 'VEH-002',
-    titular: 'María González',
-    tipoSeguro: 'Responsabilidad Civil',
-    vehiculo: 'Honda Civic 2019',
-    placa: 'XYZ-789',
-    prima: 280,
-    vencimiento: '2025-11-30',
-    estado: 'Activa',
-    telefono: '+1234567891',
-    cobertura: 'Daños a Terceros',
-    deducible: 30000,
-    fechaCreacion: '2024-08-20',
-    clienteId: 'CLI-002'
-  }
-];
+// Datos mock de pólizas vehiculares - Solo datos reales de cotizaciones aprobadas
+export const mockPolizas = [];
 
 // Datos mock de reclamos vehiculares
 export const mockReclamos = [

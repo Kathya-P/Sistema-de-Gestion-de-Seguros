@@ -21,6 +21,9 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [cotizaciones, setCotizaciones] = useState([]);
   const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
+  
+  // Obtener usuario actual
+  const currentUser = permissions?.currentUser || JSON.parse(localStorage.getItem('seguros_session_data') || '{}').user;
 
   // Cargar cotizaciones del localStorage
   useEffect(() => {
@@ -35,7 +38,7 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
     año: '',
     placa: '',
     valorVehiculo: '',
-    deducible: '50000',
+    deducible: '750',
     edad: '',
     historialSiniestros: 'sin-siniestros',
     añosLicencia: '',
@@ -52,7 +55,7 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
   };
 
   const calcularPrima = (datos) => {
-    let prima = parseInt(datos.valorVehiculo) * 0.03; // Base 3% del valor
+    let prima = parseInt(datos.valorVehiculo) * 0.015; // Base 1.5% del valor (más realista para dólares)
 
     // Ajuste por tipo de cobertura
     switch (datos.tipoSeguro) {
@@ -121,9 +124,9 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
 
     // Ajuste por deducible
     const deducible = parseInt(datos.deducible);
-    if (deducible >= 100000) prima *= 0.85;
-    else if (deducible >= 75000) prima *= 0.9;
-    else if (deducible >= 50000) prima *= 0.95;
+    if (deducible >= 1500) prima *= 0.85;
+    else if (deducible >= 1000) prima *= 0.9;
+    else if (deducible >= 750) prima *= 0.95;
 
     return Math.round(prima);
   };
@@ -144,8 +147,9 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
     const primaAnual = primaMensual * 12;
 
     // Crear solicitud
+    const codigoSolicitud = `COT-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
     const nuevaSolicitud = {
-      id: `SOL-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: codigoSolicitud,
       nombreCompleto: formData.nombreCompleto,
       telefono: formData.telefono,
       email: formData.email,
@@ -163,7 +167,8 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
       primaAnual: primaAnual.toLocaleString(),
       estado: 'pendiente',
       fechaSolicitud: new Date().toISOString().split('T')[0],
-      clienteId: permissions?.currentUser?.id || `CLI-${Date.now()}`
+      clienteId: currentUser?.id || `CLI-${Date.now()}`,
+      clienteName: currentUser?.name || formData.nombreCompleto
     };
 
     // Guardar en localStorage
@@ -172,7 +177,7 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
     localStorage.setItem('solicitudes_cotizacion', JSON.stringify(solicitudesExistentes));
 
     // Mostrar resultado y limpiar formulario
-    alert(`✅ Solicitud enviada exitosamente!\n\nPrima mensual estimada: ₡${primaMensual.toLocaleString()}\nPrima anual: ₡${primaAnual.toLocaleString()}\n\nRecibirá una respuesta en las próximas 24 horas.`);
+    alert(`✅ Solicitud enviada exitosamente!\n\nPrima mensual estimada: $${primaMensual.toLocaleString()}\nPrima anual: $${primaAnual.toLocaleString()}\n\nRecibirá una respuesta en las próximas 24 horas.`);
     
     setFormData({
       tipoSeguro: 'todo-riesgo',
@@ -181,7 +186,7 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
       año: '',
       placa: '',
       valorVehiculo: '',
-      deducible: '50000',
+      deducible: '750',
       edad: '',
       historialSiniestros: 'sin-siniestros',
       añosLicencia: '',
@@ -210,8 +215,9 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
 
   const handleApprove = (solicitud) => {
     // Crear póliza automáticamente cuando se aprueba
+    const numeroPoliza = `POL-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
     const nuevaPoliza = {
-      numeroPoliza: `VEH-${Date.now()}`,
+      numeroPoliza: numeroPoliza,
       titular: solicitud.nombreCompleto,
       clienteId: solicitud.clienteId,
       tipoSeguro: solicitud.cobertura,
@@ -222,7 +228,7 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
       estado: 'Activa',
       telefono: solicitud.telefono,
       cobertura: solicitud.cobertura,
-      deducible: solicitud.deducible || 50000,
+      deducible: solicitud.deducible || 750,
       fechaCreacion: new Date().toISOString().split('T')[0],
       solicitudId: solicitud.id
     };
@@ -235,14 +241,14 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
     // Actualizar estado de la solicitud en localStorage
     const todasSolicitudes = JSON.parse(localStorage.getItem('solicitudes_cotizacion') || '[]');
     const solicitudesActualizadas = todasSolicitudes.map(s => 
-      s.id === solicitud.id ? {...s, estado: 'aprobada', fechaAprobacion: new Date().toISOString().split('T')[0], numeroPoliza: nuevaPoliza.numeroPoliza} : s
+      s.id === solicitud.id ? {...s, estado: 'aprobada', fechaAprobacion: new Date().toISOString().split('T')[0], numeroPoliza: numeroPoliza} : s
     );
     localStorage.setItem('solicitudes_cotizacion', JSON.stringify(solicitudesActualizadas));
     
     // Actualizar estado local
     setCotizaciones(solicitudesActualizadas);
     
-    alert(`✅ Cotización aprobada y póliza ${nuevaPoliza.numeroPoliza} creada para ${solicitud.nombreCompleto}`);
+    alert(`✅ Cotización aprobada y póliza ${numeroPoliza} creada para ${solicitud.nombreCompleto}`);
   };
 
   const handleReject = (solicitud, motivo = '') => {
@@ -273,11 +279,12 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
                          cot.placa?.toLowerCase().includes(searchTerm.toLowerCase());
     
     // Si es cliente, solo ver sus propias cotizaciones
-    if (permissions?.isCliente && permissions?.currentUser) {
-      return matchesSearch && (cot.nombreCompleto === permissions.currentUser.name || 
-                              cot.clienteId === permissions.currentUser.id);
+    if (permissions?.isCliente && currentUser) {
+      return matchesSearch && (cot.clienteId === currentUser.id || 
+                              cot.nombreCompleto === currentUser.name);
     }
     
+    // Si es admin, ve todas las cotizaciones
     return matchesSearch;
   });
 
@@ -418,7 +425,7 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
                     <tr key={cotizacion.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">#{cotizacion.id?.slice(-8)}</div>
+                          <div className="text-sm font-medium text-gray-900">{cotizacion.id}</div>
                           <div className="text-sm text-gray-500">Solicitud: {cotizacion.fechaSolicitud}</div>
                         </div>
                       </td>
@@ -446,7 +453,7 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
                         <div className="text-sm text-gray-900">{cotizacion.cobertura}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-green-600">₡{cotizacion.primaMensual}</div>
+                        <div className="text-sm font-medium text-green-600">${cotizacion.primaMensual}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span 
@@ -671,20 +678,20 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Valor Comercial del Vehículo (₡) *
+                    Valor Comercial del Vehículo ($) *
                   </label>
                   <input
                     type="number"
                     name="valorVehiculo"
                     value={formData.valorVehiculo}
                     onChange={handleInputChange}
-                    placeholder="Ej: 15000000"
-                    min="1000000"
-                    max="100000000"
+                    placeholder="Ej: 25000"
+                    min="5000"
+                    max="150000"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
-                  <p className="text-sm text-gray-500 mt-1">Valor actual de mercado del vehículo</p>
+                  <p className="text-sm text-gray-500 mt-1">Valor actual de mercado del vehículo en dólares</p>
                 </div>
 
                 <div>
@@ -697,10 +704,10 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="30000">₡30,000 (Prima más alta)</option>
-                    <option value="50000">₡50,000 (Recomendado)</option>
-                    <option value="75000">₡75,000</option>
-                    <option value="100000">₡100,000 (Prima más baja)</option>
+                    <option value="500">$500 (Prima más alta)</option>
+                    <option value="750">$750 (Recomendado)</option>
+                    <option value="1000">$1,000</option>
+                    <option value="1500">$1,500 (Prima más baja)</option>
                   </select>
                 </div>
               </div>
@@ -808,8 +815,8 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
                 {/* Estado y ID */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
-                    <p className="text-sm text-gray-500">ID de Solicitud</p>
-                    <p className="font-medium">#{solicitudSeleccionada.id?.slice(-8)}</p>
+                    <p className="text-sm text-gray-500">Código de Cotización</p>
+                    <p className="font-medium">{solicitudSeleccionada.id}</p>
                   </div>
                   <div>
                     <span 
@@ -869,11 +876,11 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Valor del Vehículo</p>
-                      <p className="font-medium">₡{solicitudSeleccionada.valorVehiculo}</p>
+                      <p className="font-medium">${solicitudSeleccionada.valorVehiculo}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Deducible</p>
-                      <p className="font-medium">₡{solicitudSeleccionada.deducible?.toLocaleString()}</p>
+                      <p className="font-medium">${solicitudSeleccionada.deducible?.toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
@@ -912,11 +919,11 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
                     </div>
                     <div>
                       <p className="text-sm text-green-700">Prima Mensual</p>
-                      <p className="font-semibold text-green-900">₡{solicitudSeleccionada.primaMensual}</p>
+                      <p className="font-semibold text-green-900">${solicitudSeleccionada.primaMensual}</p>
                     </div>
                     <div>
                       <p className="text-sm text-green-700">Prima Anual</p>
-                      <p className="font-semibold text-green-900">₡{solicitudSeleccionada.primaAnual}</p>
+                      <p className="font-semibold text-green-900">${solicitudSeleccionada.primaAnual}</p>
                     </div>
                   </div>
                 </div>
