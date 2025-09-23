@@ -25,6 +25,7 @@ const SistemaGestionSeguros = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
   const [showLandingPage, setShowLandingPage] = useState(true);
+  const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
 
   // Estados principales
   const [activeModule, setActiveModule] = useState('inicio');
@@ -78,10 +79,19 @@ const SistemaGestionSeguros = () => {
     setCurrentUser(null);
     setActiveModule('inicio');
     setShowLandingPage(true);
+    setShowLogoutConfirmation(false);
     
     // Limpiar sesión guardada
     sessionManager.clearSession();
     console.log('👋 Logout y sesión eliminada');
+  };
+
+  const handleLogoutClick = () => {
+    setShowLogoutConfirmation(true);
+  };
+
+  const handleCancelLogout = () => {
+    setShowLogoutConfirmation(false);
   };
 
   const handleLoginClick = () => {
@@ -193,6 +203,60 @@ const SistemaGestionSeguros = () => {
         </div>
       )}
 
+      {/* Modal de Confirmación de Logout */}
+      {showLogoutConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl">
+            <div className="text-center">
+              {/* Icono de logout */}
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                <LogOut className="w-8 h-8 text-red-600" />
+              </div>
+              
+              {/* Título */}
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                ¿Cerrar sesión?
+              </h3>
+              
+              {/* Mensaje */}
+              <p className="text-gray-600 mb-6">
+                ¿Estás seguro de que deseas cerrar tu sesión? Tendrás que volver a iniciar sesión para acceder al sistema.
+              </p>
+              
+              {/* Información del usuario */}
+              <div className="bg-gray-50 rounded-lg p-3 mb-6">
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <User className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div className="text-sm">
+                    <p className="font-medium text-gray-900">{currentUser?.name}</p>
+                    <p className="text-gray-500">{currentUser?.role}</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Botones */}
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={handleCancelLogout}
+                  className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Cerrar Sesión
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Mostrar aplicación principal solo cuando no es landing page */}
       {!showLandingPage && (
         <>
@@ -238,7 +302,7 @@ const SistemaGestionSeguros = () => {
                       <p className="user-role">{currentUser?.role}</p>
                     </div>
                     <button 
-                      onClick={handleLogout}
+                      onClick={handleLogoutClick}
                       className="logout-btn"
                       title="Cerrar sesión"
                     >
