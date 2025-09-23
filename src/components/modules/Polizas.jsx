@@ -48,11 +48,10 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
   const getFilteredPolizas = () => {
     let polizasFiltradas = polizasReales; // Usar pólizas reales en lugar de props
     
-    // Si es cliente, solo mostrar sus propias pólizas APROBADAS
+    // Si es cliente, solo mostrar sus propias pólizas (TODAS, sin importar el estado)
     if (permissions?.isCliente && currentUser) {
       polizasFiltradas = polizasReales.filter(poliza => 
-        (poliza.clienteId === currentUser.id || poliza.titular === currentUser.name) &&
-        (poliza.estado === 'Activa' || poliza.estado === 'aprobada')
+        poliza.clienteId === currentUser.id || poliza.titular === currentUser.name
       );
     }
 
@@ -287,19 +286,22 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-            <div className="flex items-center space-x-2">
-              <Filter className="w-4 h-4 text-gray-400" />
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-48"
-              >
-                <option value="todas">Todas las pólizas</option>
-                <option value="Activa">Activas</option>
-                <option value="Pendiente">Pendientes</option>
-                <option value="Vencida">Vencidas</option>
-              </select>
-            </div>
+            {/* Filtro por estado solo para administradores */}
+            {permissions?.isAdmin && (
+              <div className="flex items-center space-x-2">
+                <Filter className="w-4 h-4 text-gray-400" />
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-48"
+                >
+                  <option value="todas">Todas las pólizas</option>
+                  <option value="Activa">Activas</option>
+                  <option value="Pendiente">Pendientes</option>
+                  <option value="Vencida">Vencidas</option>
+                </select>
+              </div>
+            )}
           </div>
         )}
       </div>
