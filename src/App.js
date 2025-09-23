@@ -196,7 +196,7 @@ const SistemaGestionSeguros = () => {
 
     switch (activeModule) {
       case 'inicio':
-        return <Inicio polizas={polizas} reclamos={reclamos} clientes={clientes} setActiveModule={handleModuleChange} permissions={permissions} />;
+        return <Inicio polizas={polizas} reclamos={reclamos} clientes={clientes} setActiveModule={handleModuleChange} permissions={permissions} currentUser={currentUser} />;
       case 'polizas':
         return <Polizas polizas={polizas} setPolizas={setPolizas} permissions={permissions} />;
       case 'clientes':
@@ -212,7 +212,7 @@ const SistemaGestionSeguros = () => {
       case 'reportes':
         return <Reportes permissions={permissions} />;
       default:
-        return <Inicio polizas={polizas} reclamos={reclamos} clientes={clientes} setActiveModule={handleModuleChange} permissions={permissions} />;
+        return <Inicio polizas={polizas} reclamos={reclamos} clientes={clientes} setActiveModule={handleModuleChange} permissions={permissions} currentUser={currentUser} />;
     }
   };
 
