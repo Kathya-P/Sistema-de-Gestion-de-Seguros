@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Calculator, 
-  DollarSign, 
   FileText, 
   Search, 
   Plus,
   Eye,
   Check,
   X,
-  Edit,
   Clock,
   CheckCircle,
   XCircle,
@@ -70,6 +68,9 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
       case 'basico':
         prima *= 0.6;
         break;
+      default:
+        prima *= 1.0;
+        break;
     }
 
     // Ajuste por edad
@@ -94,6 +95,9 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
       case 'mas-15':
         prima *= 0.8;
         break;
+      default:
+        prima *= 1.0;
+        break;
     }
 
     // Ajuste por historial
@@ -109,6 +113,9 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
         break;
       case 'mas-siniestros':
         prima *= 2.0;
+        break;
+      default:
+        prima *= 1.0;
         break;
     }
 
@@ -202,17 +209,40 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
   };
 
   const handleApprove = (solicitud) => {
-    // Actualizar estado en localStorage
+    // Crear póliza automáticamente cuando se aprueba
+    const nuevaPoliza = {
+      numeroPoliza: `VEH-${Date.now()}`,
+      titular: solicitud.nombreCompleto,
+      clienteId: solicitud.clienteId,
+      tipoSeguro: solicitud.cobertura,
+      vehiculo: `${solicitud.marca} ${solicitud.modelo} ${solicitud.año}`,
+      placa: solicitud.placa,
+      prima: parseFloat(solicitud.primaMensual.replace(/,/g, '')),
+      vencimiento: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      estado: 'Activa',
+      telefono: solicitud.telefono,
+      cobertura: solicitud.cobertura,
+      deducible: solicitud.deducible || 50000,
+      fechaCreacion: new Date().toISOString().split('T')[0],
+      solicitudId: solicitud.id
+    };
+
+    // Guardar póliza en localStorage
+    const polizasExistentes = JSON.parse(localStorage.getItem('polizas_vehiculares') || '[]');
+    const nuevasPolizas = [...polizasExistentes, nuevaPoliza];
+    localStorage.setItem('polizas_vehiculares', JSON.stringify(nuevasPolizas));
+
+    // Actualizar estado de la solicitud en localStorage
     const todasSolicitudes = JSON.parse(localStorage.getItem('solicitudes_cotizacion') || '[]');
     const solicitudesActualizadas = todasSolicitudes.map(s => 
-      s.id === solicitud.id ? {...s, estado: 'aprobada', fechaAprobacion: new Date().toISOString().split('T')[0]} : s
+      s.id === solicitud.id ? {...s, estado: 'aprobada', fechaAprobacion: new Date().toISOString().split('T')[0], numeroPoliza: nuevaPoliza.numeroPoliza} : s
     );
     localStorage.setItem('solicitudes_cotizacion', JSON.stringify(solicitudesActualizadas));
     
     // Actualizar estado local
     setCotizaciones(solicitudesActualizadas);
     
-    alert(`✅ Cotización aprobada para ${solicitud.nombreCompleto}`);
+    alert(`✅ Cotización aprobada y póliza ${nuevaPoliza.numeroPoliza} creada para ${solicitud.nombreCompleto}`);
   };
 
   const handleReject = (solicitud, motivo = '') => {

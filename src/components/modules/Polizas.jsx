@@ -27,10 +27,19 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
     const solicitudes = JSON.parse(localStorage.getItem('solicitudes_cotizacion') || '[]');
     setSolicitudesPendientes(solicitudes.filter(s => s.estado === 'pendiente'));
     
-    // Cargar solo pólizas reales del localStorage, ignorar las props
+    // Cargar pólizas del localStorage y combinar con las del estado inicial
     const polizasGuardadas = JSON.parse(localStorage.getItem('polizas_vehiculares') || '[]');
-    setPolizasReales(polizasGuardadas);
-  }, []);
+    
+    // Combinar pólizas iniciales con las creadas desde cotizaciones
+    const todasLasPolizas = [...polizas, ...polizasGuardadas];
+    
+    // Eliminar duplicados basados en numeroPoliza
+    const polizasUnicas = todasLasPolizas.filter((poliza, index, self) => 
+      index === self.findIndex(p => p.numeroPoliza === poliza.numeroPoliza)
+    );
+    
+    setPolizasReales(polizasUnicas);
+  }, [polizas]);
 
   // Filtrar pólizas según permisos del usuario
   const getFilteredPolizas = () => {
@@ -80,8 +89,9 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
     const nuevasPolizas = [...polizasExistentes, nuevaPoliza];
     localStorage.setItem('polizas_vehiculares', JSON.stringify(nuevasPolizas));
     
-    // Actualizar estado local
+    // Actualizar estado local y también el estado principal de App.js
     setPolizasReales(nuevasPolizas);
+    setPolizas(nuevasPolizas); // Actualizar también el estado principal
 
     // Actualizar estado de la solicitud en localStorage
     const todasSolicitudes = JSON.parse(localStorage.getItem('solicitudes_cotizacion') || '[]');
