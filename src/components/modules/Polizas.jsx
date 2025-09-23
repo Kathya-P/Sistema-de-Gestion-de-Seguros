@@ -12,8 +12,13 @@ import {
   Car,
   Check,
   X,
-  AlertCircle
+  AlertCircle,
+  Trash2,
+  PauseCircle,
+  RefreshCw,
+  Download
 } from 'lucide-react';
+import jsPDF from 'jspdf';
 
 const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -124,11 +129,217 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
     alert('❌ Solicitud rechazada');
   };
 
+  // Funciones de acción para administradores
+  const verDetallePoliza = (poliza) => {
+    alert(`📋 Detalles de Póliza ${poliza.numeroPoliza}\n\nTitular: ${poliza.titular}\nVehículo: ${poliza.vehiculo}\nPlaca: ${poliza.placa}\nCobertura: ${poliza.cobertura}\nPrima: $${poliza.prima}\nEstado: ${poliza.estado}\nVencimiento: ${poliza.vencimiento}`);
+  };
+
+  const editarPoliza = (poliza) => {
+    const nuevaPrima = window.prompt(`Editar prima mensual para ${poliza.numeroPoliza}:`, poliza.prima);
+    if (nuevaPrima && !isNaN(nuevaPrima)) {
+      const polizasActualizadas = polizasReales.map(p => 
+        p.numeroPoliza === poliza.numeroPoliza ? {...p, prima: parseFloat(nuevaPrima)} : p
+      );
+      localStorage.setItem('polizas', JSON.stringify(polizasActualizadas));
+      setPolizasReales(polizasActualizadas);
+      alert(`✅ Prima actualizada para póliza ${poliza.numeroPoliza}`);
+    }
+  };
+
+  const suspenderPoliza = (poliza) => {
+    if (window.confirm(`¿Suspender la póliza ${poliza.numeroPoliza}?`)) {
+      const polizasActualizadas = polizasReales.map(p => 
+        p.numeroPoliza === poliza.numeroPoliza ? {...p, estado: 'Suspendida'} : p
+      );
+      localStorage.setItem('polizas', JSON.stringify(polizasActualizadas));
+      setPolizasReales(polizasActualizadas);
+      alert(`⏸️ Póliza ${poliza.numeroPoliza} suspendida`);
+    }
+  };
+
+  const reactivarPoliza = (poliza) => {
+    if (window.confirm(`¿Reactivar la póliza ${poliza.numeroPoliza}?`)) {
+      const polizasActualizadas = polizasReales.map(p => 
+        p.numeroPoliza === poliza.numeroPoliza ? {...p, estado: 'Activa'} : p
+      );
+      localStorage.setItem('polizas', JSON.stringify(polizasActualizadas));
+      setPolizasReales(polizasActualizadas);
+      alert(`🔄 Póliza ${poliza.numeroPoliza} reactivada`);
+    }
+  };
+
+  const eliminarPoliza = (poliza) => {
+    if (window.confirm(`⚠️ ¿Está seguro de eliminar la póliza ${poliza.numeroPoliza}?\n\nEsta acción no se puede deshacer.`)) {
+      const polizasActualizadas = polizasReales.filter(p => p.numeroPoliza !== poliza.numeroPoliza);
+      localStorage.setItem('polizas', JSON.stringify(polizasActualizadas));
+      setPolizasReales(polizasActualizadas);
+      alert(`🗑️ Póliza ${poliza.numeroPoliza} eliminada`);
+    }
+  };
+
+  const descargarPoliza = (poliza) => {
+    const doc = new jsPDF();
+    
+    // Configuración de colores y fuentes
+    const primaryColor = [30, 58, 114]; // #1e3a72
+    const accentColor = [230, 238, 247]; // #e6eef7
+    const textColor = [51, 51, 51]; // #333333
+    
+    // Encabezado con fondo azul
+    doc.setFillColor(...primaryColor);
+    doc.rect(0, 0, 210, 40, 'F');
+    
+    // Logo/Título principal
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SEGUROS VEHICULARES', 105, 20, { align: 'center' });
+    
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'normal');
+    doc.text('CERTIFICADO DE PÓLIZA', 105, 30, { align: 'center' });
+    
+    // Información de la póliza
+    doc.setTextColor(...textColor);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`PÓLIZA N° ${poliza.numeroPoliza}`, 20, 60);
+    
+    // Fecha de emisión
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Fecha de emisión: ${new Date().toLocaleDateString('es-ES')}`, 150, 60);
+    
+    // Línea separadora
+    doc.setDrawColor(...primaryColor);
+    doc.setLineWidth(0.5);
+    doc.line(20, 70, 190, 70);
+    
+    // Información del asegurado
+    let yPos = 85;
+    doc.setFillColor(...accentColor);
+    doc.rect(20, yPos - 5, 170, 8, 'F');
+    doc.setTextColor(...primaryColor);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('INFORMACIÓN DEL ASEGURADO', 25, yPos);
+    
+    yPos += 15;
+    doc.setTextColor(...textColor);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('Titular:', 25, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(poliza.titular, 55, yPos);
+    
+    yPos += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Teléfono:', 25, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(poliza.telefono || 'No especificado', 55, yPos);
+    
+    // Información del vehículo
+    yPos += 20;
+    doc.setFillColor(...accentColor);
+    doc.rect(20, yPos - 5, 170, 8, 'F');
+    doc.setTextColor(...primaryColor);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('INFORMACIÓN DEL VEHÍCULO', 25, yPos);
+    
+    yPos += 15;
+    doc.setTextColor(...textColor);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('Vehículo:', 25, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(poliza.vehiculo, 55, yPos);
+    
+    yPos += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Placa:', 25, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(poliza.placa, 55, yPos);
+    
+    // Información de la cobertura
+    yPos += 20;
+    doc.setFillColor(...accentColor);
+    doc.rect(20, yPos - 5, 170, 8, 'F');
+    doc.setTextColor(...primaryColor);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('DETALLES DE LA COBERTURA', 25, yPos);
+    
+    yPos += 15;
+    doc.setTextColor(...textColor);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('Tipo de Cobertura:', 25, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(poliza.cobertura || poliza.tipoSeguro, 75, yPos);
+    
+    yPos += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Prima Mensual:', 25, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`$${poliza.prima}`, 75, yPos);
+    
+    yPos += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Deducible:', 25, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`$${poliza.deducible || '750'}`, 75, yPos);
+    
+    yPos += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Estado:', 25, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(poliza.estado, 75, yPos);
+    
+    yPos += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Fecha de Vencimiento:', 25, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(poliza.vencimiento, 75, yPos);
+    
+    // Nota al pie
+    yPos += 30;
+    doc.setFillColor(245, 245, 245);
+    doc.rect(20, yPos - 5, 170, 20, 'F');
+    doc.setTextColor(100, 100, 100);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'italic');
+    doc.text('Este documento certifica la cobertura de seguro vehicular según los términos', 25, yPos);
+    doc.text('y condiciones establecidos en la póliza. Válido únicamente con firma digital.', 25, yPos + 5);
+    doc.text(`Documento generado automáticamente el ${new Date().toLocaleDateString('es-ES')} a las ${new Date().toLocaleTimeString('es-ES')}`, 25, yPos + 12);
+    
+    // Pie de página
+    doc.setFillColor(...primaryColor);
+    doc.rect(0, 270, 210, 27, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SEGUROS VEHICULARES - Sistema de Gestión', 105, 285, { align: 'center' });
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Tel: (503) 2XXX-XXXX | Email: info@segurosvehiculares.com', 105, 292, { align: 'center' });
+    
+    // Descargar el PDF
+    doc.save(`Poliza_${poliza.numeroPoliza}.pdf`);
+  };
+
   const getStatusColor = (estado) => {
     switch (estado) {
       case 'Activa': return '#2d5016';
       case 'Pendiente': return '#b7541a';
       case 'Vencida': return '#991b1b';
+      case 'Suspendida': return '#dc2626';
       default: return '#6b7280';
     }
   };
@@ -138,6 +349,7 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
       case 'Activa': return <CheckCircle className="w-4 h-4" />;
       case 'Pendiente': return <Clock className="w-4 h-4" />;
       case 'Vencida': return <XCircle className="w-4 h-4" />;
+      case 'Suspendida': return <PauseCircle className="w-4 h-4" />;
       default: return <FileText className="w-4 h-4" />;
     }
   };
@@ -298,6 +510,7 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
                   <option value="todas">Todas las pólizas</option>
                   <option value="Activa">Activas</option>
                   <option value="Pendiente">Pendientes</option>
+                  <option value="Suspendida">Suspendidas</option>
                   <option value="Vencida">Vencidas</option>
                 </select>
               </div>
@@ -454,20 +667,59 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
+                        <div className="flex space-x-1">
                           <button 
-                            className="text-blue-600 hover:text-blue-900 transition-colors"
+                            onClick={() => verDetallePoliza(poliza)}
+                            className="p-1 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded transition-colors"
                             title="Ver detalles"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
+                          
                           {permissions?.isAdmin && (
-                            <button 
-                              className="text-green-600 hover:text-green-900 transition-colors"
-                              title="Editar póliza"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
+                            <>
+                              <button 
+                                onClick={() => editarPoliza(poliza)}
+                                className="p-1 text-green-600 hover:text-green-900 hover:bg-green-50 rounded transition-colors"
+                                title="Editar póliza"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              
+                              <button 
+                                onClick={() => descargarPoliza(poliza)}
+                                className="p-1 text-purple-600 hover:text-purple-900 hover:bg-purple-50 rounded transition-colors"
+                                title="Descargar póliza"
+                              >
+                                <Download className="w-4 h-4" />
+                              </button>
+                              
+                              {poliza.estado === 'Activa' ? (
+                                <button 
+                                  onClick={() => suspenderPoliza(poliza)}
+                                  className="p-1 text-orange-600 hover:text-orange-900 hover:bg-orange-50 rounded transition-colors"
+                                  title="Suspender póliza"
+                                >
+                                  <PauseCircle className="w-4 h-4" />
+                                </button>
+                              ) : poliza.estado === 'Suspendida' ? (
+                                <button 
+                                  onClick={() => reactivarPoliza(poliza)}
+                                  className="p-1 text-green-600 hover:text-green-900 hover:bg-green-50 rounded transition-colors"
+                                  title="Reactivar póliza"
+                                >
+                                  <RefreshCw className="w-4 h-4" />
+                                </button>
+                              ) : null}
+                              
+                              <button 
+                                onClick={() => eliminarPoliza(poliza)}
+                                className="p-1 text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors"
+                                title="Eliminar póliza"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
                           )}
                         </div>
                       </td>

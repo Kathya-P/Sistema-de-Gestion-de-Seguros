@@ -252,7 +252,7 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
   };
 
   const handleReject = (solicitud, motivo = '') => {
-    const motivoRechazo = motivo || prompt('Motivo del rechazo (opcional):') || 'No especificado';
+    const motivoRechazo = motivo || window.prompt('Motivo del rechazo (opcional):') || 'No especificado';
     
     // Actualizar estado en localStorage  
     const todasCotizaciones = JSON.parse(localStorage.getItem('cotizaciones') || '[]');
