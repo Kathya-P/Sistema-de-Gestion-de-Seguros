@@ -9,7 +9,6 @@ import Inicio from './components/Inicio';
 import Cotizaciones from './components/modules/Cotizaciones';
 import Polizas from './components/modules/Polizas';
 import Clientes from './components/modules/Clientes';
-import Reclamos from './components/modules/Reclamos';
 import DeteccionFraudes from './components/modules/DeteccionFraudes';
 import RevisarAccidentes from './components/modules/RevisarAccidentes';
 import Reportes from './components/modules/Reportes';
@@ -19,7 +18,7 @@ import GuestBanner from './components/auth/GuestBanner';
 import { getMenuForRole, mockPolizas, mockReclamos, mockClientes, getPageTitle } from './data/mockData';
 import { sessionManager, usePermissions, userManager } from './utils/sessionManager';
 
-const SistemaGestionSeguros = () => {
+const SistemaSeguroVehicular = () => {
   // Estados para autenticación  
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -30,7 +29,6 @@ const SistemaGestionSeguros = () => {
   // Estados principales
   const [activeModule, setActiveModule] = useState('inicio');
   const [polizas, setPolizas] = useState(mockPolizas);
-  const [reclamos, setReclamos] = useState(mockReclamos);
   const [clientes, setClientes] = useState(mockClientes);
   const [resultadoCotizacion, setResultadoCotizacion] = useState(null);
 
@@ -196,15 +194,13 @@ const SistemaGestionSeguros = () => {
 
     switch (activeModule) {
       case 'inicio':
-        return <Inicio polizas={polizas} reclamos={reclamos} clientes={clientes} setActiveModule={handleModuleChange} permissions={permissions} currentUser={currentUser} />;
+        return <Inicio polizas={polizas} clientes={clientes} setActiveModule={handleModuleChange} permissions={permissions} currentUser={currentUser} />;
       case 'polizas':
         return <Polizas polizas={polizas} setPolizas={setPolizas} permissions={permissions} />;
       case 'clientes':
         return <Clientes clientes={clientes} setClientes={setClientes} permissions={permissions} />;
       case 'cotizaciones':
         return <Cotizaciones resultadoCotizacion={resultadoCotizacion} handleCalcular={handleCalcular} permissions={permissions} />;
-      case 'reclamos':
-        return <Reclamos reclamos={reclamos} setReclamos={setReclamos} permissions={permissions} />;
       case 'fraudes':
         return <DeteccionFraudes permissions={permissions} />;
       case 'accidentes':
@@ -212,7 +208,7 @@ const SistemaGestionSeguros = () => {
       case 'reportes':
         return <Reportes permissions={permissions} />;
       default:
-        return <Inicio polizas={polizas} reclamos={reclamos} clientes={clientes} setActiveModule={handleModuleChange} permissions={permissions} currentUser={currentUser} />;
+        return <Inicio polizas={polizas} clientes={clientes} setActiveModule={handleModuleChange} permissions={permissions} currentUser={currentUser} />;
     }
   };
 
@@ -307,7 +303,7 @@ const SistemaGestionSeguros = () => {
                   <Shield className="w-6 h-6" style={{color: '#1e3a72'}} />
                 </div>
                 <div>
-                  <h1>SecureTech Solutions</h1>
+                  <h1>SecureAuto Pro</h1>
                 </div>
               </div>
 
@@ -376,4 +372,4 @@ const SistemaGestionSeguros = () => {
   );
 };
 
-export default SistemaGestionSeguros;
+export default SistemaSeguroVehicular;

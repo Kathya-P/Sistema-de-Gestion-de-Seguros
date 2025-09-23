@@ -34,15 +34,14 @@ export const users = [
   }
 ];
 
-// Menú de navegación completo
+// Menú de navegación enfocado en seguros vehiculares
 export const allMenuItems = [
-  { id: 'inicio', label: 'Inicio', icon: Home, roles: ['admin', 'agente', 'cliente'] },
-  { id: 'polizas', label: 'Pólizas', icon: FileText, roles: ['admin', 'agente', 'cliente'] },
-  { id: 'clientes', label: 'Clientes', icon: Users, roles: ['admin'] }, // Solo admin
-  { id: 'cotizaciones', label: 'Cotizaciones', icon: Calculator, roles: ['admin', 'agente', 'cliente'] },
-  { id: 'reclamos', label: 'Reclamos', icon: AlertTriangle, roles: ['admin', 'agente', 'cliente'] },
-  { id: 'fraudes', label: 'Fraudes', icon: Shield, roles: ['admin'] }, // Solo admin
-  { id: 'accidentes', label: 'Accidentes', icon: Car, roles: ['admin', 'agente', 'cliente'] },
+  { id: 'inicio', label: 'Dashboard', icon: Home, roles: ['admin', 'agente', 'cliente'] },
+  { id: 'polizas', label: 'Pólizas Vehiculares', icon: FileText, roles: ['admin', 'agente', 'cliente'] },
+  { id: 'clientes', label: 'Propietarios', icon: Users, roles: ['admin'] }, // Solo admin
+  { id: 'cotizaciones', label: 'Cotizar Seguro', icon: Calculator, roles: ['admin', 'agente', 'cliente'] },
+  { id: 'accidentes', label: 'Gestión de Accidentes', icon: Car, roles: ['admin', 'agente', 'cliente'] },
+  { id: 'fraudes', label: 'Fraudes Vehiculares', icon: Shield, roles: ['admin'] }, // Solo admin
   { id: 'reportes', label: 'Reportes', icon: BarChart3, roles: ['admin'] } // Solo admin
 ];
 
@@ -55,100 +54,132 @@ export const getMenuForRole = (userRole) => {
 // Menú de navegación (mantener compatibilidad)
 export const menuItems = allMenuItems;
 
-// Datos mock de pólizas
+// Datos mock de pólizas vehiculares
 export const mockPolizas = [
   {
-    numeroPoliza: 'POL-001',
+    numeroPoliza: 'VEH-001',
     titular: 'Juan Pérez',
-    tipoSeguro: 'Vehicular',
+    tipoSeguro: 'Seguro Completo',
+    vehiculo: 'Toyota Corolla 2020',
+    placa: 'ABC-123',
     prima: 450,
     vencimiento: '2025-12-15',
     estado: 'Activa',
-    telefono: '+1234567890'
+    telefono: '+1234567890',
+    cobertura: 'Todo Riesgo',
+    deducible: 50000
   },
   {
-    numeroPoliza: 'POL-002',
+    numeroPoliza: 'VEH-002',
     titular: 'María González',
-    tipoSeguro: 'Hogar',
+    tipoSeguro: 'Responsabilidad Civil',
+    vehiculo: 'Honda Civic 2019',
+    placa: 'XYZ-789',
     prima: 280,
     vencimiento: '2025-11-30',
     estado: 'Activa',
-    telefono: '+1234567891'
+    telefono: '+1234567891',
+    cobertura: 'Daños a Terceros',
+    deducible: 30000
   },
   {
-    numeroPoliza: 'POL-003',
+    numeroPoliza: 'VEH-003',
     titular: 'Carlos Ruiz',
-    tipoSeguro: 'Vida',
-    prima: 650,
+    tipoSeguro: 'Seguro Básico',
+    vehiculo: 'Nissan Sentra 2018',
+    placa: 'DEF-456',
+    prima: 320,
     vencimiento: '2025-10-22',
     estado: 'Pendiente',
-    telefono: '+1234567892'
+    telefono: '+1234567892',
+    cobertura: 'Robo y Daños Parciales',
+    deducible: 40000
   },
   {
-    numeroPoliza: 'POL-004',
+    numeroPoliza: 'VEH-004',
     titular: 'Ana López',
-    tipoSeguro: 'Salud',
-    prima: 380,
+    tipoSeguro: 'Todo Riesgo Premium',
+    vehiculo: 'Mazda CX-5 2021',
+    placa: 'GHI-789',
+    prima: 680,
     vencimiento: '2025-09-15',
     estado: 'Vencida',
-    telefono: '+1234567893'
+    telefono: '+1234567893',
+    cobertura: 'Cobertura Amplia + Asistencia',
+    deducible: 75000
   },
   {
-    numeroPoliza: 'POL-005',
+    numeroPoliza: 'VEH-005',
     titular: 'Roberto Silva',
-    tipoSeguro: 'Vehicular',
-    prima: 520,
+    tipoSeguro: 'Seguro Completo',
+    vehiculo: 'Chevrolet Spark 2020',
+    placa: 'JKL-012',
+    prima: 380,
     vencimiento: '2026-01-10',
     estado: 'Activa',
-    telefono: '+1234567894'
+    telefono: '+1234567894',
+    cobertura: 'Todo Riesgo',
+    deducible: 45000
   }
 ];
 
-// Datos mock de reclamos
+// Datos mock de reclamos vehiculares
 export const mockReclamos = [
   {
     numeroReclamo: 'REC-001',
-    poliza: 'POL-001',
+    poliza: 'VEH-001',
     titular: 'Juan Pérez',
-    tipoReclamo: 'Daño vehicular',
+    vehiculo: 'Toyota Corolla 2020',
+    placa: 'ABC-123',
+    tipoReclamo: 'Colisión frontal',
     fechaIncidente: '2024-08-15',
-    montoReclamado: 5500,
+    ubicacion: 'Av. Principal con Calle 5',
+    montoReclamado: 85000,
     estado: 'En revisión',
-    descripcion: 'Accidente de tráfico con daños en el parachoques delantero'
+    descripcion: 'Colisión frontal con otro vehículo, daños en parachoques y faro delantero'
   },
   {
     numeroReclamo: 'REC-002',
-    poliza: 'POL-002',
+    poliza: 'VEH-002',
     titular: 'María González',
-    tipoReclamo: 'Robo en hogar',
+    vehiculo: 'Honda Civic 2019',
+    placa: 'XYZ-789',
+    tipoReclamo: 'Robo total',
     fechaIncidente: '2024-08-20',
-    montoReclamado: 3200,
+    ubicacion: 'Centro Comercial Plaza Norte',
+    montoReclamado: 320000,
     estado: 'Aprobado',
-    descripcion: 'Robo de electrodomésticos durante ausencia'
+    descripcion: 'Vehículo sustraído del estacionamiento del centro comercial'
   },
   {
     numeroReclamo: 'REC-003',
-    poliza: 'POL-003',
+    poliza: 'VEH-003',
     titular: 'Carlos Ruiz',
-    tipoReclamo: 'Gastos médicos',
+    vehiculo: 'Nissan Sentra 2018',
+    placa: 'DEF-456',
+    tipoReclamo: 'Daños por granizo',
     fechaIncidente: '2024-09-01',
-    montoReclamado: 1800,
+    ubicacion: 'Zona Residencial Sur',
+    montoReclamado: 45000,
     estado: 'Documentos pendientes',
-    descripcion: 'Hospitalización por emergencia médica'
+    descripcion: 'Daños en carrocería y cristales por tormenta de granizo'
   },
   {
     numeroReclamo: 'REC-004',
-    poliza: 'POL-005',
+    poliza: 'VEH-005',
     titular: 'Roberto Silva',
+    vehiculo: 'Chevrolet Spark 2020',
+    placa: 'JKL-012',
     tipoReclamo: 'Vandalismo',
     fechaIncidente: '2024-09-10',
-    montoReclamado: 2100,
+    ubicacion: 'Calle Comercial 456',
+    montoReclamado: 25000,
     estado: 'Rechazado',
-    descripcion: 'Daños por vandalismo en vehículo estacionado'
+    descripcion: 'Rayones en pintura y daños en espejos retrovisores'
   }
 ];
 
-// Datos mock de clientes
+// Datos mock de propietarios de vehículos
 export const mockClientes = [
   {
     id: 1,
@@ -160,7 +191,10 @@ export const mockClientes = [
     tipoDocumento: 'Cédula',
     numeroDocumento: '12345678',
     polizasActivas: 1,
-    fechaRegistro: '2023-01-15'
+    fechaRegistro: '2023-01-15',
+    licenciaConducir: 'LIC123456789',
+    experienciaConduciendo: '15 años',
+    vehiculos: ['Toyota Corolla 2020']
   },
   {
     id: 2,
@@ -172,7 +206,10 @@ export const mockClientes = [
     tipoDocumento: 'Cédula',
     numeroDocumento: '87654321',
     polizasActivas: 1,
-    fechaRegistro: '2023-02-20'
+    fechaRegistro: '2023-02-20',
+    licenciaConducir: 'LIC987654321',
+    experienciaConduciendo: '8 años',
+    vehiculos: ['Honda Civic 2019']
   },
   {
     id: 3,
@@ -184,7 +221,10 @@ export const mockClientes = [
     tipoDocumento: 'Pasaporte',
     numeroDocumento: 'P12345678',
     polizasActivas: 1,
-    fechaRegistro: '2023-03-10'
+    fechaRegistro: '2023-03-10',
+    licenciaConducir: 'LIC456789123',
+    experienciaConduciendo: '22 años',
+    vehiculos: ['Nissan Sentra 2018']
   },
   {
     id: 4,
@@ -196,7 +236,10 @@ export const mockClientes = [
     tipoDocumento: 'Cédula',
     numeroDocumento: '11223344',
     polizasActivas: 1,
-    fechaRegistro: '2023-04-05'
+    fechaRegistro: '2023-04-05',
+    licenciaConducir: 'LIC789123456',
+    experienciaConduciendo: '5 años',
+    vehiculos: ['Mazda CX-5 2021']
   },
   {
     id: 5,
@@ -208,21 +251,23 @@ export const mockClientes = [
     tipoDocumento: 'Cédula',
     numeroDocumento: '55667788',
     polizasActivas: 1,
-    fechaRegistro: '2023-05-12'
+    fechaRegistro: '2023-05-12',
+    licenciaConducir: 'LIC321654987',
+    experienciaConduciendo: '12 años',
+    vehiculos: ['Chevrolet Spark 2020']
   }
 ];
 
 // Función para obtener el título de la página
 export const getPageTitle = (activeModule) => {
   const titles = {
-    inicio: 'Inicio',
-    polizas: 'Gestión de Pólizas',
-    clientes: 'Gestión de Clientes',
-    cotizaciones: 'Cotizaciones',
-    reclamos: 'Gestión de Reclamos',
-    fraudes: 'Detección de Fraudes',
-    accidentes: 'Revisión de Accidentes',
-    reportes: 'Reportes y Análisis'
+    inicio: 'Dashboard Vehicular',
+    polizas: 'Pólizas Vehiculares',
+    clientes: 'Propietarios de Vehículos',
+    cotizaciones: 'Cotizar Seguro Vehicular',
+    accidentes: 'Gestión de Accidentes',
+    fraudes: 'Fraudes Vehiculares',
+    reportes: 'Reportes Vehiculares'
   };
-  return titles[activeModule] || 'Sistema de Gestión de Seguros';
+  return titles[activeModule] || 'Sistema de Seguros Vehiculares';
 };

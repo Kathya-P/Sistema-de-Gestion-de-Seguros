@@ -19,7 +19,6 @@ import {
 
 const Inicio = ({ 
   polizas, 
-  reclamos, 
   clientes, 
   setActiveModule,
   permissions,
@@ -64,13 +63,13 @@ const Inicio = ({
               <Shield className="w-14 h-14" style={{color: '#1e3a72'}} />
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-gray-900">Panel de Control</h1>
-              <p className="text-lg text-slate-600 mt-1">Administración completa del sistema</p>
+              <h1 className="text-4xl font-bold text-gray-900">Dashboard Vehicular</h1>
+              <p className="text-lg text-slate-600 mt-1">Panel de control de seguros vehiculares</p>
             </div>
           </div>
           <div className="bg-white/60 rounded-lg px-6 py-4 mt-6">
             <p className="text-xl text-gray-800 mb-2">¡Bienvenido, {currentUser?.nombre || 'Administrador'}!</p>
-            <p className="text-base text-gray-600">Gestiona todos los aspectos del negocio desde aquí</p>
+            <p className="text-base text-gray-600">Gestiona todos los seguros vehiculares desde aquí</p>
           </div>
         </div>
       </div>
@@ -87,7 +86,7 @@ const Inicio = ({
               <div className="flex justify-between items-center w-full">
                 <div>
                   <p className="text-2xl font-bold" style={{color: '#1e3a72'}}>{polizas.length}</p>
-                  <p className="text-xs text-gray-600 mt-1">Pólizas Totales</p>
+                  <p className="text-xs text-gray-600 mt-1">Pólizas Vehiculares</p>
                 </div>
                 <Shield className="w-8 h-8" style={{color: '#1e3a72', opacity: 0.2}} />
               </div>
@@ -96,10 +95,10 @@ const Inicio = ({
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 h-20 flex items-center hover:shadow-md transition-shadow duration-200">
               <div className="flex justify-between items-center w-full">
                 <div>
-                  <p className="text-2xl font-bold" style={{color: '#b7541a'}}>{reclamos.filter(r => r.estado === 'En revisión').length}</p>
-                  <p className="text-xs text-gray-600 mt-1">Reclamos Pendientes</p>
+                  <p className="text-2xl font-bold" style={{color: '#b7541a'}}>3</p>
+                  <p className="text-xs text-gray-600 mt-1">Accidentes Reportados</p>
                 </div>
-                <AlertTriangle className="w-8 h-8" style={{color: '#b7541a', opacity: 0.2}} />
+                <Car className="w-8 h-8" style={{color: '#b7541a', opacity: 0.2}} />
               </div>
             </div>
 
@@ -107,7 +106,7 @@ const Inicio = ({
               <div className="flex justify-between items-center w-full">
                 <div>
                   <p className="text-2xl font-bold" style={{color: '#2d5016'}}>{clientes.length}</p>
-                  <p className="text-xs text-gray-600 mt-1">Clientes Activos</p>
+                  <p className="text-xs text-gray-600 mt-1">Propietarios</p>
                 </div>
                 <Users className="w-8 h-8" style={{color: '#2d5016', opacity: 0.2}} />
               </div>
@@ -117,7 +116,7 @@ const Inicio = ({
               <div className="flex justify-between items-center w-full">
                 <div>
                   <p className="text-2xl font-bold" style={{color: '#1e3a72'}}>$24,500</p>
-                  <p className="text-xs text-gray-600 mt-1">Ingresos del mes</p>
+                  <p className="text-xs text-gray-600 mt-1">Primas Cobradas</p>
                 </div>
                 <DollarSign className="w-8 h-8" style={{color: '#1e3a72', opacity: 0.2}} />
               </div>
@@ -130,15 +129,15 @@ const Inicio = ({
           <div className="flex items-center mb-4">
             <h3 className="text-xl font-semibold text-gray-900">Módulos del Sistema</h3>
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-            {/* Todos los módulos visibles */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-5">
+            {/* Módulos enfocados en seguros vehiculares */}
             <div onClick={() => setActiveModule('polizas')} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 flex flex-col justify-center min-h-[140px]">
               <div className="text-center">
                 <div className="p-4 rounded-xl mb-4 mx-auto w-fit" style={{backgroundColor: '#e6eef7'}}>
                   <FileText className="w-7 h-7" style={{color: '#1e3a72'}} />
                 </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">Pólizas</h3>
-                <p className="text-gray-600 text-xs">Gestiona todas las pólizas</p>
+                <h3 className="text-base font-semibold text-gray-900 mb-2">Pólizas Vehiculares</h3>
+                <p className="text-gray-600 text-xs">Gestiona seguros de vehículos</p>
               </div>
             </div>
 
@@ -147,38 +146,8 @@ const Inicio = ({
                 <div className="p-4 rounded-xl mb-4 mx-auto w-fit" style={{backgroundColor: '#f0fdf4'}}>
                   <Users className="w-7 h-7" style={{color: '#2d5016'}} />
                 </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">Clientes</h3>
-                <p className="text-gray-600 text-xs">Gestiona usuarios</p>
-              </div>
-            </div>
-
-            <div onClick={() => setActiveModule('reclamos')} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 flex flex-col justify-center min-h-[140px]">
-              <div className="text-center">
-                <div className="p-4 rounded-xl mb-4 mx-auto w-fit" style={{backgroundColor: '#fef3e8'}}>
-                  <AlertTriangle className="w-7 h-7" style={{color: '#b7541a'}} />
-                </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">Reclamos</h3>
-                <p className="text-gray-600 text-xs">Gestiona y resuelve</p>
-              </div>
-            </div>
-
-            <div onClick={() => setActiveModule('fraudes')} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 flex flex-col justify-center min-h-[140px]">
-              <div className="text-center">
-                <div className="p-4 rounded-xl mb-4 mx-auto w-fit" style={{backgroundColor: '#f0f7ff'}}>
-                  <Shield className="w-7 h-7" style={{color: '#1e3a72'}} />
-                </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">Fraudes</h3>
-                <p className="text-gray-600 text-xs">Investigar casos</p>
-              </div>
-            </div>
-
-            <div onClick={() => setActiveModule('cotizaciones')} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 flex flex-col justify-center min-h-[140px]">
-              <div className="text-center">
-                <div className="p-4 rounded-xl mb-4 mx-auto w-fit" style={{backgroundColor: '#e6eef7'}}>
-                  <Calculator className="w-7 h-7" style={{color: '#1e3a72'}} />
-                </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">Cotizaciones</h3>
-                <p className="text-gray-600 text-xs">Aprobar y modificar</p>
+                <h3 className="text-base font-semibold text-gray-900 mb-2">Propietarios</h3>
+                <p className="text-gray-600 text-xs">Gestiona propietarios de vehículos</p>
               </div>
             </div>
 
@@ -187,8 +156,28 @@ const Inicio = ({
                 <div className="p-4 rounded-xl mb-4 mx-auto w-fit" style={{backgroundColor: '#fef3e8'}}>
                   <Car className="w-7 h-7" style={{color: '#b7541a'}} />
                 </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">Accidentes</h3>
-                <p className="text-gray-600 text-xs">Supervisar casos</p>
+                <h3 className="text-base font-semibold text-gray-900 mb-2">Gestión de Accidentes</h3>
+                <p className="text-gray-600 text-xs">Supervisar casos de accidentes</p>
+              </div>
+            </div>
+
+            <div onClick={() => setActiveModule('fraudes')} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 flex flex-col justify-center min-h-[140px]">
+              <div className="text-center">
+                <div className="p-4 rounded-xl mb-4 mx-auto w-fit" style={{backgroundColor: '#f0f7ff'}}>
+                  <Shield className="w-7 h-7" style={{color: '#1e3a72'}} />
+                </div>
+                <h3 className="text-base font-semibold text-gray-900 mb-2">Fraudes Vehiculares</h3>
+                <p className="text-gray-600 text-xs">Detectar fraudes en seguros</p>
+              </div>
+            </div>
+
+            <div onClick={() => setActiveModule('cotizaciones')} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 flex flex-col justify-center min-h-[140px]">
+              <div className="text-center">
+                <div className="p-4 rounded-xl mb-4 mx-auto w-fit" style={{backgroundColor: '#e6eef7'}}>
+                  <Calculator className="w-7 h-7" style={{color: '#1e3a72'}} />
+                </div>
+                <h3 className="text-base font-semibold text-gray-900 mb-2">Cotizar Seguros</h3>
+                <p className="text-gray-600 text-xs">Generar cotizaciones vehiculares</p>
               </div>
             </div>
 
@@ -197,8 +186,8 @@ const Inicio = ({
                 <div className="p-4 rounded-xl mb-4 mx-auto w-fit" style={{backgroundColor: '#f0f7ff'}}>
                   <BarChart3 className="w-7 h-7" style={{color: '#1e3a72'}} />
                 </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">Reportes</h3>
-                <p className="text-gray-600 text-xs">Analytics y métricas</p>
+                <h3 className="text-base font-semibold text-gray-900 mb-2">Reportes Vehiculares</h3>
+                <p className="text-gray-600 text-xs">Analytics y métricas del negocio</p>
               </div>
             </div>
           </div>
@@ -218,13 +207,13 @@ const Inicio = ({
               <Users className="w-14 h-14" style={{color: '#1e3a72'}} />
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-gray-900">Mi Portal Personal</h1>
-              <p className="text-lg text-slate-600 mt-1">Tu espacio de seguros personalizado</p>
+              <h1 className="text-4xl font-bold text-gray-900">Mi Portal Vehicular</h1>
+              <p className="text-lg text-slate-600 mt-1">Tu espacio de seguros vehiculares personalizado</p>
             </div>
           </div>
           <div className="bg-white/60 rounded-lg px-6 py-4 mt-6">
             <p className="text-xl text-gray-800 mb-2">¡Bienvenido, {currentUser?.nombre || 'Usuario'}!</p>
-            <p className="text-base text-gray-600">Aquí puedes gestionar tus pólizas, solicitar cotizaciones y más</p>
+            <p className="text-base text-gray-600">Aquí puedes gestionar tus pólizas vehiculares, reportar accidentes y más</p>
           </div>
         </div>
       </div>
@@ -240,8 +229,8 @@ const Inicio = ({
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 h-20 flex items-center hover:shadow-md transition-shadow duration-200">
               <div className="flex justify-between items-center w-full">
                 <div>
-                  <p className="text-2xl font-bold" style={{color: '#1e3a72'}}>3</p>
-                  <p className="text-xs text-gray-600 mt-1">Mis Pólizas</p>
+                  <p className="text-2xl font-bold" style={{color: '#1e3a72'}}>2</p>
+                  <p className="text-xs text-gray-600 mt-1">Mis Vehículos Asegurados</p>
                 </div>
                 <Shield className="w-8 h-8" style={{color: '#1e3a72', opacity: 0.2}} />
               </div>
@@ -250,8 +239,8 @@ const Inicio = ({
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 h-20 flex items-center hover:shadow-md transition-shadow duration-200">
               <div className="flex justify-between items-center w-full">
                 <div>
-                  <p className="text-2xl font-bold" style={{color: '#b7541a'}}>1</p>
-                  <p className="text-xs text-gray-600 mt-1">Reclamos Activos</p>
+                  <p className="text-2xl font-bold" style={{color: '#b7541a'}}>0</p>
+                  <p className="text-xs text-gray-600 mt-1">Accidentes Reportados</p>
                 </div>
                 <AlertTriangle className="w-8 h-8" style={{color: '#b7541a', opacity: 0.2}} />
               </div>
@@ -317,15 +306,15 @@ const Inicio = ({
           <div className="flex items-center mb-4">
             <h3 className="text-xl font-semibold text-gray-900">¿Qué deseas hacer?</h3>
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-5">
             {/* Solo módulos permitidos para cliente */}
             <div onClick={() => setActiveModule('polizas')} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 flex flex-col justify-center min-h-[140px]">
               <div className="text-center">
                 <div className="p-4 rounded-xl mb-4 mx-auto w-fit" style={{backgroundColor: '#e6eef7'}}>
                   <FileText className="w-7 h-7" style={{color: '#1e3a72'}} />
                 </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">Mis Pólizas</h3>
-                <p className="text-gray-600 text-xs">Ver mis seguros</p>
+                <h3 className="text-base font-semibold text-gray-900 mb-2">Mis Pólizas Vehiculares</h3>
+                <p className="text-gray-600 text-xs">Ver mis seguros de vehículos</p>
               </div>
             </div>
 
@@ -334,18 +323,8 @@ const Inicio = ({
                 <div className="p-4 rounded-xl mb-4 mx-auto w-fit" style={{backgroundColor: '#e6eef7'}}>
                   <Calculator className="w-7 h-7" style={{color: '#1e3a72'}} />
                 </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">Cotizar</h3>
-                <p className="text-gray-600 text-xs">Solicitar cotización</p>
-              </div>
-            </div>
-
-            <div onClick={() => setActiveModule('reclamos')} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 flex flex-col justify-center min-h-[140px]">
-              <div className="text-center">
-                <div className="p-4 rounded-xl mb-4 mx-auto w-fit" style={{backgroundColor: '#fef3e8'}}>
-                  <AlertTriangle className="w-7 h-7" style={{color: '#b7541a'}} />
-                </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">Mis Reclamos</h3>
-                <p className="text-gray-600 text-xs">Gestionar reclamos</p>
+                <h3 className="text-base font-semibold text-gray-900 mb-2">Cotizar Seguro</h3>
+                <p className="text-gray-600 text-xs">Solicitar cotización vehicular</p>
               </div>
             </div>
 
@@ -355,7 +334,7 @@ const Inicio = ({
                   <Car className="w-7 h-7" style={{color: '#b7541a'}} />
                 </div>
                 <h3 className="text-base font-semibold text-gray-900 mb-2">Reportar Accidente</h3>
-                <p className="text-gray-600 text-xs">Informar incidente</p>
+                <p className="text-gray-600 text-xs">Informar incidente vehicular</p>
               </div>
             </div>
           </div>
@@ -373,15 +352,15 @@ const Inicio = ({
             <button onClick={() => setActiveModule('cotizaciones')} className="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all duration-300">
               <div className="flex items-center">
                 <Calculator className="w-6 h-6 mr-4" style={{color: '#2d5016'}} />
-                <span className="text-base font-medium text-gray-900">Nueva cotización</span>
+                <span className="text-base font-medium text-gray-900">Cotizar seguro vehicular</span>
               </div>
               <span className="text-sm text-gray-500">→</span>
             </button>
 
-            <button onClick={() => setActiveModule('reclamos')} className="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-all duration-300">
+            <button onClick={() => setActiveModule('accidentes')} className="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-all duration-300">
               <div className="flex items-center">
-                <AlertTriangle className="w-6 h-6 mr-4" style={{color: '#b7541a'}} />
-                <span className="text-base font-medium text-gray-900">Hacer reclamo</span>
+                <Car className="w-6 h-6 mr-4" style={{color: '#b7541a'}} />
+                <span className="text-base font-medium text-gray-900">Reportar accidente</span>
               </div>
               <span className="text-sm text-gray-500">→</span>
             </button>
@@ -397,7 +376,7 @@ const Inicio = ({
           <div className="space-y-4">
             <div className="flex items-center justify-between py-3 border-b border-gray-100">
               <div>
-                <p className="text-base font-medium text-gray-900">Seguro Vehicular</p>
+                <p className="text-base font-medium text-gray-900">Seguro Honda Civic</p>
                 <p className="text-sm text-gray-500">Vence en 15 días</p>
               </div>
               <span className="text-sm text-orange-600 bg-orange-100 px-3 py-1 rounded-full">Próximo</span>
@@ -405,7 +384,7 @@ const Inicio = ({
             
             <div className="flex items-center justify-between py-3">
               <div>
-                <p className="text-base font-medium text-gray-900">Seguro de Hogar</p>
+                <p className="text-base font-medium text-gray-900">Seguro Toyota Corolla</p>
                 <p className="text-sm text-gray-500">Vence en 2 meses</p>
               </div>
               <span className="text-sm text-green-600 bg-green-100 px-3 py-1 rounded-full">Al día</span>
@@ -426,8 +405,8 @@ const Inicio = ({
               <Shield className="w-14 h-14" style={{color: '#1e3a72'}} />
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-gray-900">SecureTech Solutions</h1>
-              <p className="text-lg text-slate-600 mt-1">Sistema de Gestión de Seguros</p>
+              <h1 className="text-4xl font-bold text-gray-900">SecureAuto Pro</h1>
+              <p className="text-lg text-slate-600 mt-1">Sistema de Seguros Vehiculares</p>
             </div>
           </div>
           <div className="bg-white/60 rounded-lg px-6 py-4 mt-6">
@@ -449,7 +428,7 @@ const Inicio = ({
           <div className="flex items-center">
             <div className="w-3 h-3 rounded-full mr-3" style={{backgroundColor: '#2d5016'}}></div>
             <span className="text-base text-gray-700">
-              💡 <strong>Tip:</strong> {permissions.isAdmin ? 'Revisa los reclamos pendientes regularmente' : 'Mantén tus pólizas al día para una mejor protección'}
+              💡 <strong>Tip:</strong> {permissions.isAdmin ? 'Revisa los accidentes reportados regularmente' : 'Mantén tus pólizas vehiculares al día para una mejor protección'}
             </span>
           </div>
           <div className="flex items-center text-sm text-gray-500">

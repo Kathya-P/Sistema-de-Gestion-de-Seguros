@@ -22,43 +22,57 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
       id: 1,
       numero: 'COT-001',
       cliente: 'María López',
-      tipoSeguro: 'Vehicular',
+      vehiculo: 'Honda Civic 2020',
+      placa: 'ABC-123',
+      tipoSeguro: 'Todo Riesgo',
       valorAsegurado: 25000,
       prima: 850,
       estado: 'Pendiente',
       fechaSolicitud: '2024-09-18',
-      fechaVencimiento: '2024-10-18'
+      fechaVencimiento: '2024-10-18',
+      cobertura: 'Cobertura Completa + Asistencia'
     },
     {
       id: 2,
       numero: 'COT-002',
       cliente: 'Carlos Rodríguez',
-      tipoSeguro: 'Hogar',
-      valorAsegurado: 180000,
-      prima: 1200,
+      vehiculo: 'Toyota Corolla 2019',
+      placa: 'XYZ-789',
+      tipoSeguro: 'Responsabilidad Civil',
+      valorAsegurado: 20000,
+      prima: 450,
       estado: 'Aprobada',
       fechaSolicitud: '2024-09-15',
-      fechaVencimiento: '2024-10-15'
+      fechaVencimiento: '2024-10-15',
+      cobertura: 'Daños a Terceros'
     },
     {
       id: 3,
       numero: 'COT-003',
       cliente: 'Ana Jiménez',
-      tipoSeguro: 'Vida',
-      valorAsegurado: 100000,
-      prima: 450,
+      vehiculo: 'Nissan Sentra 2021',
+      placa: 'DEF-456',
+      tipoSeguro: 'Seguro Básico',
+      valorAsegurado: 22000,
+      prima: 580,
       estado: 'Rechazada',
       fechaSolicitud: '2024-09-10',
-      fechaVencimiento: '2024-10-10'
+      fechaVencimiento: '2024-10-10',
+      cobertura: 'Robo y Daños Parciales'
     }
   ]);
 
   const [formData, setFormData] = useState({
-    tipoSeguro: 'vehicular',
-    valorAsegurado: '',
-    deducible: '1000',
+    tipoSeguro: 'todo-riesgo',
+    marca: '',
+    modelo: '',
+    año: '',
+    placa: '',
+    valorVehiculo: '',
+    deducible: '50000',
     edad: '',
-    historialSiniestros: 'sin-siniestros'
+    historialSiniestros: 'sin-siniestros',
+    añosLicencia: ''
   });
 
   const handleInputChange = (e) => {
@@ -88,7 +102,8 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
   const filteredCotizaciones = cotizaciones.filter(cot => {
     const matchesSearch = cot.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          cot.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         cot.tipoSeguro.toLowerCase().includes(searchTerm.toLowerCase());
+                         cot.vehiculo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         cot.placa.toLowerCase().includes(searchTerm.toLowerCase());
     
     // Si es cliente, solo ver sus propias cotizaciones
     if (permissions?.userRole === 'cliente') {
@@ -126,9 +141,9 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
               <Calculator className="w-6 h-6" style={{color: '#1e3a72'}} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Cotizaciones</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Cotizaciones Vehiculares</h2>
               <p className="text-gray-600">
-                {permissions?.isAdmin ? 'Gestiona todas las cotizaciones' : 'Solicita y revisa tus cotizaciones'}
+                {permissions?.isAdmin ? 'Gestiona todas las cotizaciones de seguros vehiculares' : 'Solicita y revisa tus cotizaciones de seguros para vehículos'}
               </p>
             </div>
           </div>
@@ -181,7 +196,7 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
                 <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Buscar por número, cliente o tipo..."
+                  placeholder="Buscar por número, cliente, vehículo o placa..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -302,14 +317,14 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
         /* Formulario de solicitud - Solo para clientes */
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
           <h3 className="text-xl font-semibold text-gray-900 mb-6">
-            Solicitar Cotización
+            Solicitar Cotización de Seguro Vehicular
           </h3>
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tipo de Seguro
+                  Tipo de Cobertura Vehicular
                 </label>
                 <select
                   name="tipoSeguro"
@@ -317,23 +332,101 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="vehicular">Seguro Vehicular</option>
-                  <option value="hogar">Seguro de Hogar</option>
-                  <option value="vida">Seguro de Vida</option>
-                  <option value="salud">Seguro de Salud</option>
+                  <option value="todo-riesgo">Todo Riesgo</option>
+                  <option value="responsabilidad-civil">Responsabilidad Civil</option>
+                  <option value="basico">Seguro Básico</option>
+                  <option value="premium">Todo Riesgo Premium</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Valor a Asegurar
+                  Marca del Vehículo
+                </label>
+                <select
+                  name="marca"
+                  value={formData.marca}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option value="">Seleccione marca</option>
+                  <option value="toyota">Toyota</option>
+                  <option value="honda">Honda</option>
+                  <option value="nissan">Nissan</option>
+                  <option value="mazda">Mazda</option>
+                  <option value="chevrolet">Chevrolet</option>
+                  <option value="hyundai">Hyundai</option>
+                  <option value="kia">Kia</option>
+                  <option value="ford">Ford</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Modelo del Vehículo
+                </label>
+                <input
+                  type="text"
+                  name="modelo"
+                  value={formData.modelo}
+                  onChange={handleInputChange}
+                  placeholder="Ej: Corolla, Civic, Sentra"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Año del Vehículo
+                </label>
+                <select
+                  name="año"
+                  value={formData.año}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option value="">Seleccione año</option>
+                  <option value="2024">2024</option>
+                  <option value="2023">2023</option>
+                  <option value="2022">2022</option>
+                  <option value="2021">2021</option>
+                  <option value="2020">2020</option>
+                  <option value="2019">2019</option>
+                  <option value="2018">2018</option>
+                  <option value="2017">2017</option>
+                  <option value="2016">2016</option>
+                  <option value="2015">2015</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Placa del Vehículo
+                </label>
+                <input
+                  type="text"
+                  name="placa"
+                  value={formData.placa}
+                  onChange={handleInputChange}
+                  placeholder="Ej: ABC-123"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Valor del Vehículo
                 </label>
                 <input
                   type="number"
-                  name="valorAsegurado"
-                  value={formData.valorAsegurado}
+                  name="valorVehiculo"
+                  value={formData.valorVehiculo}
                   onChange={handleInputChange}
-                  placeholder="Ingrese el valor"
+                  placeholder="Valor comercial del vehículo"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
@@ -349,32 +442,54 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="500">$500</option>
-                  <option value="1000">$1,000</option>
-                  <option value="2500">$2,500</option>
-                  <option value="5000">$5,000</option>
+                  <option value="30000">₡30,000</option>
+                  <option value="50000">₡50,000</option>
+                  <option value="75000">₡75,000</option>
+                  <option value="100000">₡100,000</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Edad del Solicitante
+                  Edad del Conductor Principal
                 </label>
                 <input
                   type="number"
                   name="edad"
                   value={formData.edad}
                   onChange={handleInputChange}
-                  placeholder="Ingrese la edad"
+                  placeholder="Edad en años"
+                  min="18"
+                  max="80"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Años con Licencia de Conducir
+                </label>
+                <select
+                  name="añosLicencia"
+                  value={formData.añosLicencia}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option value="">Seleccione experiencia</option>
+                  <option value="menos-1">Menos de 1 año</option>
+                  <option value="1-3">1 a 3 años</option>
+                  <option value="4-7">4 a 7 años</option>
+                  <option value="8-15">8 a 15 años</option>
+                  <option value="mas-15">Más de 15 años</option>
+                </select>
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Historial de Siniestros
+                Historial de Accidentes/Siniestros
               </label>
               <select
                 name="historialSiniestros"
@@ -382,10 +497,10 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="sin-siniestros">Sin siniestros</option>
-                <option value="1-siniestro">1 siniestro en los últimos 5 años</option>
-                <option value="2-siniestros">2 siniestros en los últimos 5 años</option>
-                <option value="mas-siniestros">Más de 2 siniestros</option>
+                <option value="sin-siniestros">Sin accidentes/siniestros</option>
+                <option value="1-siniestro">1 accidente en los últimos 5 años</option>
+                <option value="2-siniestros">2 accidentes en los últimos 5 años</option>
+                <option value="mas-siniestros">Más de 2 accidentes</option>
               </select>
             </div>
 
