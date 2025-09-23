@@ -92,22 +92,11 @@ export const userManager = {
             id: 1,
             username: 'admin',
             password: 'admin123',
-            name: 'Administrador',
+            name: 'Administrador del Sistema',
             email: 'admin@securetech.com',
             phone: '2234-0000',
             role: 'Administrador',
             rol: 'admin',
-            createdAt: new Date().toISOString()
-          },
-          {
-            id: 2,
-            username: 'maria.lopez',
-            password: 'agente123',
-            name: 'María López',
-            email: 'maria.lopez@securetech.com',
-            phone: '2234-1111',
-            role: 'Agente de Seguros',
-            rol: 'agente',
             createdAt: new Date().toISOString()
           }
         ];
@@ -154,7 +143,7 @@ export const userManager = {
         email: userData.email,
         phone: userData.phone,
         role: userData.role === 'admin' ? 'Administrador' : 
-              userData.role === 'agente' ? 'Agente de Seguros' : 'Cliente',
+              userData.role === 'agente' ? 'Agente' : 'Cliente',
         rol: userData.role,
         createdAt: new Date().toISOString()
       };

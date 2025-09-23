@@ -41,15 +41,63 @@ const AuthComponent = ({ onLogin, onRegister }) => {
     setError('');
     setIsLoading(true);
 
-    // Validaciones
-    if (registerData.password !== registerData.confirmPassword) {
-      setError('Las contraseñas no coinciden');
+    // Validaciones mejoradas
+    const { name, username, email, phone, password, confirmPassword } = registerData;
+
+    // Validar campos vacíos
+    if (!name.trim() || !username.trim() || !email.trim() || !phone.trim() || !password || !confirmPassword) {
+      setError('Todos los campos son obligatorios');
       setIsLoading(false);
       return;
     }
 
-    if (registerData.password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres');
+    // Validar nombre (mínimo 2 caracteres, solo letras y espacios)
+    if (name.trim().length < 2 || !/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(name.trim())) {
+      setError('El nombre debe tener al menos 2 caracteres y solo contener letras');
+      setIsLoading(false);
+      return;
+    }
+
+    // Validar usuario (3-20 caracteres, solo letras, números, puntos y guiones)
+    if (username.length < 3 || username.length > 20 || !/^[a-zA-Z0-9._-]+$/.test(username)) {
+      setError('El usuario debe tener entre 3-20 caracteres (solo letras, números, . _ -)');
+      setIsLoading(false);
+      return;
+    }
+
+    // Validar email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Por favor ingresa un email válido');
+      setIsLoading(false);
+      return;
+    }
+
+    // Validar teléfono (formato flexible)
+    const phoneRegex = /^[\d\s\-\+\(\)]{8,15}$/;
+    if (!phoneRegex.test(phone.replace(/\s/g, ''))) {
+      setError('El teléfono debe tener entre 8-15 dígitos');
+      setIsLoading(false);
+      return;
+    }
+
+    // Validar contraseña
+    if (password.length < 8) {
+      setError('La contraseña debe tener al menos 8 caracteres');
+      setIsLoading(false);
+      return;
+    }
+
+    // Validar que tenga al menos una letra y un número
+    if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(password)) {
+      setError('La contraseña debe contener al menos una letra y un número');
+      setIsLoading(false);
+      return;
+    }
+
+    // Validar coincidencia de contraseñas
+    if (password !== confirmPassword) {
+      setError('Las contraseñas no coinciden');
       setIsLoading(false);
       return;
     }
@@ -70,7 +118,7 @@ const AuthComponent = ({ onLogin, onRegister }) => {
         setError('');
         alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
       } else {
-        setError('El usuario ya existe o hubo un error en el registro');
+        setError('El usuario o email ya existe');
       }
       setIsLoading(false);
     }, 1000);
@@ -241,7 +289,7 @@ const AuthComponent = ({ onLogin, onRegister }) => {
                   value={registerData.password}
                   onChange={(e) => setRegisterData({...registerData, password: e.target.value})}
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Mínimo 8 caracteres, 1 letra y 1 número"
                   required
                 />
                 <button
@@ -293,17 +341,6 @@ const AuthComponent = ({ onLogin, onRegister }) => {
             {isLoading ? 'Registrando...' : 'Crear Cuenta'}
           </button>
         </form>
-      )}
-
-      {/* Información de usuarios de prueba - Solo en login */}
-      {isLogin && (
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <h4 className="text-sm font-medium text-gray-900 mb-2">Usuarios de prueba:</h4>
-          <div className="text-xs text-gray-600 space-y-1">
-            <div><strong>Admin:</strong> admin / admin123</div>
-            <div><strong>Agente:</strong> maria.lopez / agente123</div>
-          </div>
-        </div>
       )}
     </div>
   );
