@@ -1,7 +1,7 @@
 import React from 'react';
 import { BarChart3, TrendingUp, TrendingDown, DollarSign, Users, FileText } from 'lucide-react';
 
-const Reportes = () => {
+const Reportes = ({ permissions }) => {
   return (
     <div className="space-y-6">
       {/* Header */}

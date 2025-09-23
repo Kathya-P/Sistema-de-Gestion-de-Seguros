@@ -38,12 +38,12 @@ export const users = [
 export const allMenuItems = [
   { id: 'inicio', label: 'Inicio', icon: Home, roles: ['admin', 'agente', 'cliente'] },
   { id: 'polizas', label: 'Pólizas', icon: FileText, roles: ['admin', 'agente', 'cliente'] },
-  { id: 'clientes', label: 'Clientes', icon: Users, roles: ['admin', 'agente'] }, // Solo admin y agente
+  { id: 'clientes', label: 'Clientes', icon: Users, roles: ['admin'] }, // Solo admin
   { id: 'cotizaciones', label: 'Cotizaciones', icon: Calculator, roles: ['admin', 'agente', 'cliente'] },
   { id: 'reclamos', label: 'Reclamos', icon: AlertTriangle, roles: ['admin', 'agente', 'cliente'] },
-  { id: 'fraudes', label: 'Fraudes', icon: Shield, roles: ['admin', 'agente'] }, // Solo admin y agente
+  { id: 'fraudes', label: 'Fraudes', icon: Shield, roles: ['admin'] }, // Solo admin
   { id: 'accidentes', label: 'Accidentes', icon: Car, roles: ['admin', 'agente', 'cliente'] },
-  { id: 'reportes', label: 'Reportes', icon: BarChart3, roles: ['admin', 'agente'] } // Solo admin y agente
+  { id: 'reportes', label: 'Reportes', icon: BarChart3, roles: ['admin'] } // Solo admin
 ];
 
 // Función para obtener menú filtrado por rol

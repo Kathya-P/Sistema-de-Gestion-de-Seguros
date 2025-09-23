@@ -115,12 +115,12 @@ export const userManager = {
           {
             id: 2,
             username: 'maria.lopez',
-            password: 'agente123',
+            password: 'cliente123',
             name: 'María López',
             email: 'maria.lopez@securetech.com',
             phone: '2234-1111',
             role: 'Cliente',
-            rol: 'agente',
+            rol: 'cliente',
             createdAt: new Date().toISOString()
           }
         ];
@@ -201,30 +201,50 @@ export const usePermissions = () => {
   const userRole = currentUser ? currentUser.rol : 'guest';
   
   return {
-    // Permisos básicos de CRUD
-    canCreate: currentUser && (userRole === 'admin' || userRole === 'agente'),
-    canEdit: currentUser && (userRole === 'admin' || userRole === 'agente'),
-    canDelete: currentUser && (userRole === 'admin'),
-    canApprove: currentUser && (userRole === 'admin' || userRole === 'agente'),
+    // Permisos básicos de CRUD - Admin puede todo, Cliente solo ver
+    canCreate: currentUser && (userRole === 'admin'), // Solo admin puede crear
+    canEdit: currentUser && (userRole === 'admin'), // Solo admin puede editar
+    canDelete: currentUser && (userRole === 'admin'), // Solo admin puede eliminar
+    canApprove: currentUser && (userRole === 'admin'), // Solo admin puede aprobar
     
     // Permisos por módulo
-    canViewAllPolizas: currentUser && (userRole === 'admin' || userRole === 'agente'),
+    canViewAllPolizas: currentUser && (userRole === 'admin'),
     canViewOwnPolizas: currentUser !== null, // Todos pueden ver sus propias pólizas
     
-    canViewAllClientes: currentUser && (userRole === 'admin' || userRole === 'agente'),
-    canViewClients: currentUser && (userRole === 'admin' || userRole === 'agente'), // Solo admin y agente ven módulo clientes
+    canViewAllClientes: currentUser && (userRole === 'admin'),
+    canViewClients: currentUser && (userRole === 'admin'), // Solo admin ve módulo clientes
     
-    canViewAllReclamos: currentUser && (userRole === 'admin' || userRole === 'agente'),
+    canViewAllReclamos: currentUser && (userRole === 'admin'),
     canViewOwnReclamos: currentUser !== null, // Todos pueden ver sus propios reclamos
+    canProcessReclamos: currentUser && (userRole === 'admin'), // Admin puede procesar reclamos
+    canAssignInvestigators: currentUser && (userRole === 'admin'), // Admin puede asignar investigadores
+    canUploadDocuments: currentUser && (userRole === 'cliente'), // Clientes pueden subir documentos
     
-    canViewFraudes: currentUser && (userRole === 'admin' || userRole === 'agente'), // Solo admin y agente
-    canViewReports: currentUser && (userRole === 'admin' || userRole === 'agente'), // Solo admin y agente
+    // Permisos de Fraudes - Solo administradores
+    canViewFraudes: currentUser && (userRole === 'admin'), // Solo admin ve fraudes
+    canInvestigateFraudes: currentUser && (userRole === 'admin'), // Solo admin investiga fraudes
+    canMarkFraudulent: currentUser && (userRole === 'admin'), // Solo admin marca como fraudulento
+    canBlockClients: currentUser && (userRole === 'admin'), // Solo admin bloquea clientes
+    canGenerateFraudeReports: currentUser && (userRole === 'admin'), // Solo admin genera reportes de fraude
+    canViewAllFraudeCases: currentUser && (userRole === 'admin'), // Solo admin ve todos los casos
+    canAssignFraudeInvestigators: currentUser && (userRole === 'admin'), // Solo admin asigna investigadores
     
-    canProcessCotizaciones: currentUser && (userRole === 'admin' || userRole === 'agente'),
-    canRequestCotizaciones: currentUser !== null, // Todos pueden solicitar cotizaciones
+    canViewReports: currentUser && (userRole === 'admin'), // Solo admin
     
-    canViewAllAccidentes: currentUser && (userRole === 'admin' || userRole === 'agente'),
-    canReportAccidentes: currentUser !== null, // Todos pueden reportar accidentes
+    canProcessCotizaciones: currentUser && (userRole === 'admin'), // Admin puede aprobar/rechazar
+    canRequestCotizaciones: currentUser && (userRole === 'cliente'), // Clientes pueden solicitar cotizaciones
+    canModifyPrices: currentUser && (userRole === 'admin'), // Admin puede modificar precios
+    canViewAllCotizaciones: currentUser && (userRole === 'admin'), // Admin ve todas las cotizaciones
+    
+    canViewAllAccidentes: currentUser && (userRole === 'admin'),
+    canReportAccidentes: currentUser && (userRole === 'cliente'), // Solo clientes pueden reportar accidentes
+    canViewOwnAccidentes: currentUser !== null, // Todos pueden ver sus propios accidentes
+    canAssignAdjusters: currentUser && (userRole === 'admin'), // Solo admin asigna ajustadores
+    canManageAccidentInvestigation: currentUser && (userRole === 'admin'), // Solo admin gestiona investigación
+    canViewAllAccidentPhotos: currentUser && (userRole === 'admin'), // Solo admin ve todas las fotos
+    canViewAllAccidentDocuments: currentUser && (userRole === 'admin'), // Solo admin ve todos los documentos
+    canUploadAccidentPhotos: currentUser && (userRole === 'cliente'), // Solo clientes pueden subir fotos de sus accidentes
+    canUploadAccidentDocuments: currentUser && (userRole === 'cliente'), // Solo clientes pueden subir documentos de sus accidentes
     
     canManageUsers: currentUser && (userRole === 'admin'), // Solo admin
     canViewOwnData: currentUser !== null, // Todos los usuarios logueados pueden ver sus propios datos

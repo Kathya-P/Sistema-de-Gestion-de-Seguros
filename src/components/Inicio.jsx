@@ -9,6 +9,10 @@ import {
   DollarSign,
   Calendar,
   Car,
+  User,
+  Mail,
+  Phone,
+  MapPin,
   Clock,
   BarChart3
 } from 'lucide-react';
@@ -260,6 +264,49 @@ const Inicio = ({
                   <p className="text-xs text-gray-600 mt-1">Prima Mensual</p>
                 </div>
                 <DollarSign className="w-8 h-8" style={{color: '#2d5016', opacity: 0.2}} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Mi Información Personal */}
+        <div>
+          <div className="flex items-center mb-4">
+            <h3 className="text-xl font-semibold text-gray-900">Mi Información Personal</h3>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <User className="w-5 h-5 text-gray-500 mr-3" />
+                  <div>
+                    <p className="text-sm text-gray-500">Nombre Completo</p>
+                    <p className="text-base font-medium text-gray-900">{currentUser?.name || 'María López'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center">
+                  <Mail className="w-5 h-5 text-gray-500 mr-3" />
+                  <div>
+                    <p className="text-sm text-gray-500">Correo Electrónico</p>
+                    <p className="text-base font-medium text-gray-900">{currentUser?.email || 'maria.lopez@email.com'}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <Phone className="w-5 h-5 text-gray-500 mr-3" />
+                  <div>
+                    <p className="text-sm text-gray-500">Teléfono</p>
+                    <p className="text-base font-medium text-gray-900">{currentUser?.phone || '2234-1111'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center">
+                  <MapPin className="w-5 h-5 text-gray-500 mr-3" />
+                  <div>
+                    <p className="text-sm text-gray-500">Dirección</p>
+                    <p className="text-base font-medium text-gray-900">San José, Costa Rica</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

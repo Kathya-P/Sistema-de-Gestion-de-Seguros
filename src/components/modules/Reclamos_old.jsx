@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  FileText, 
+  AlertTriangle, 
   Search, 
   Filter, 
   Eye, 
@@ -8,36 +8,41 @@ import {
   Plus, 
   CheckCircle, 
   XCircle,
-  Users,
+  Clock,
+  FileText,
+  DollarSign,
   Calendar
 } from 'lucide-react';
 
-const Polizas = ({ polizas, setPolizas, permissions }) => {
+const Reclamos = ({ reclamos, setReclamos, permissions }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('todas');
+  const [filterStatus, setFilterStatus] = useState('todos');
 
-  const filteredPolizas = polizas.filter(poliza => {
-    const matchesSearch = poliza.titular.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         poliza.numeroPoliza.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'todas' || poliza.estado === filterStatus;
+  const filteredReclamos = reclamos.filter(reclamo => {
+    const matchesSearch = reclamo.titular.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         reclamo.numeroReclamo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         reclamo.poliza.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterStatus === 'todos' || reclamo.estado === filterStatus;
     return matchesSearch && matchesFilter;
   });
 
   const getStatusColor = (estado) => {
     switch (estado) {
-      case 'Activa': return '#2d5016';
-      case 'Pendiente': return '#b7541a';
-      case 'Vencida': return '#991b1b';
+      case 'Aprobado': return '#2d5016';
+      case 'En revisión': return '#b7541a';
+      case 'Rechazado': return '#991b1b';
+      case 'Documentos pendientes': return '#1e3a72';
       default: return '#6b7280';
     }
   };
 
   const getStatusIcon = (estado) => {
     switch (estado) {
-      case 'Activa': return <CheckCircle className="w-4 h-4" />;
-      case 'Pendiente': return <Calendar className="w-4 h-4" />;
-      case 'Vencida': return <XCircle className="w-4 h-4" />;
-      default: return <FileText className="w-4 h-4" />;
+      case 'Aprobado': return <CheckCircle className="w-4 h-4" />;
+      case 'En revisión': return <Clock className="w-4 h-4" />;
+      case 'Rechazado': return <XCircle className="w-4 h-4" />;
+      case 'Documentos pendientes': return <FileText className="w-4 h-4" />;
+      default: return <AlertTriangle className="w-4 h-4" />;
     }
   };
 
@@ -47,32 +52,32 @@ const Polizas = ({ polizas, setPolizas, permissions }) => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
-            <div className="p-3 rounded-lg mr-4" style={{backgroundColor: '#e6eef7'}}>
-              <FileText className="w-6 h-6" style={{color: '#1e3a72'}} />
+            <div className="p-3 rounded-lg mr-4" style={{backgroundColor: '#fef3e8'}}>
+              <AlertTriangle className="w-6 h-6" style={{color: '#b7541a'}} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Gestión de Pólizas</h2>
-              <p className="text-gray-600">Administra todas las pólizas de seguros activas</p>
+              <h2 className="text-2xl font-bold text-gray-900">Gestión de Reclamos</h2>
+              <p className="text-gray-600">Procesa y gestiona todos los reclamos de seguros</p>
             </div>
           </div>
           {permissions?.canCreate && (
-            <button className="flex items-center px-4 py-2 text-white rounded-lg hover:bg-blue-700 transition-colors" style={{backgroundColor: '#1e3a72'}}>
+            <button className="flex items-center px-4 py-2 text-white rounded-lg hover:bg-orange-700 transition-colors" style={{backgroundColor: '#b7541a'}}>
               <Plus className="w-4 h-4 mr-2" />
-              Nueva Póliza
+              Nuevo Reclamo
             </button>
           )}
         </div>
 
         {/* Filtros y búsqueda */}
-        <div className="flex flex-col sm:flex-row gap-4 mt-6">
+        <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Buscar por titular o número de póliza..."
+              placeholder="Buscar por titular, número de reclamo o póliza..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
           </div>
           <div className="flex items-center space-x-2">
@@ -80,12 +85,13 @@ const Polizas = ({ polizas, setPolizas, permissions }) => {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-48"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             >
-              <option value="todas">Todas las pólizas</option>
-              <option value="Activa">Activas</option>
-              <option value="Pendiente">Pendientes</option>
-              <option value="Vencida">Vencidas</option>
+              <option value="todos">Todos los reclamos</option>
+              <option value="En revisión">En revisión</option>
+              <option value="Aprobado">Aprobados</option>
+              <option value="Rechazado">Rechazados</option>
+              <option value="Documentos pendientes">Documentos pendientes</option>
             </select>
           </div>
         </div>
@@ -96,18 +102,29 @@ const Polizas = ({ polizas, setPolizas, permissions }) => {
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Pólizas</p>
-              <p className="text-2xl font-bold text-gray-900">{polizas.length}</p>
+              <p className="text-sm text-gray-600">Total Reclamos</p>
+              <p className="text-2xl font-bold text-gray-900">{reclamos.length}</p>
             </div>
-            <FileText className="w-8 h-8 text-gray-400" />
+            <AlertTriangle className="w-8 h-8 text-gray-400" />
           </div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Activas</p>
+              <p className="text-sm text-gray-600">En Revisión</p>
+              <p className="text-2xl font-bold" style={{color: '#b7541a'}}>
+                {reclamos.filter(r => r.estado === 'En revisión').length}
+              </p>
+            </div>
+            <Clock className="w-8 h-8" style={{color: '#b7541a'}} />
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Aprobados</p>
               <p className="text-2xl font-bold" style={{color: '#2d5016'}}>
-                {polizas.filter(p => p.estado === 'Activa').length}
+                {reclamos.filter(r => r.estado === 'Aprobado').length}
               </p>
             </div>
             <CheckCircle className="w-8 h-8" style={{color: '#2d5016'}} />
@@ -116,32 +133,21 @@ const Polizas = ({ polizas, setPolizas, permissions }) => {
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Pendientes</p>
-              <p className="text-2xl font-bold" style={{color: '#b7541a'}}>
-                {polizas.filter(p => p.estado === 'Pendiente').length}
+              <p className="text-sm text-gray-600">Monto Total</p>
+              <p className="text-2xl font-bold" style={{color: '#1e3a72'}}>
+                ${reclamos.reduce((total, r) => total + r.montoReclamado, 0).toLocaleString()}
               </p>
             </div>
-            <Calendar className="w-8 h-8" style={{color: '#b7541a'}} />
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Vencidas</p>
-              <p className="text-2xl font-bold" style={{color: '#991b1b'}}>
-                {polizas.filter(p => p.estado === 'Vencida').length}
-              </p>
-            </div>
-            <XCircle className="w-8 h-8" style={{color: '#991b1b'}} />
+            <DollarSign className="w-8 h-8" style={{color: '#1e3a72'}} />
           </div>
         </div>
       </div>
 
-      {/* Lista de pólizas */}
+      {/* Lista de reclamos */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100">
         <div className="p-6 border-b border-gray-100">
           <h3 className="text-lg font-semibold text-gray-900">
-            Pólizas ({filteredPolizas.length})
+            Reclamos ({filteredReclamos.length})
           </h3>
         </div>
         
@@ -150,7 +156,7 @@ const Polizas = ({ polizas, setPolizas, permissions }) => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Póliza
+                  Reclamo
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Titular
@@ -159,10 +165,10 @@ const Polizas = ({ polizas, setPolizas, permissions }) => {
                   Tipo
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Prima
+                  Monto
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Vencimiento
+                  Fecha Incidente
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Estado
@@ -173,46 +179,47 @@ const Polizas = ({ polizas, setPolizas, permissions }) => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredPolizas.map((poliza, index) => (
+              {filteredReclamos.map((reclamo, index) => (
                 <tr key={index} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <FileText className="w-4 h-4 mr-2 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-900">
-                        {poliza.numeroPoliza}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <Users className="w-4 h-4 mr-2 text-gray-400" />
+                      <AlertTriangle className="w-4 h-4 mr-2 text-gray-400" />
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {poliza.titular}
+                          {reclamo.numeroReclamo}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {poliza.telefono}
+                          Póliza: {reclamo.poliza}
                         </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-900">{poliza.tipoSeguro}</span>
+                    <div className="text-sm font-medium text-gray-900">
+                      {reclamo.titular}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">${poliza.prima}</div>
-                    <div className="text-sm text-gray-500">mensual</div>
+                    <span className="text-sm text-gray-900">{reclamo.tipoReclamo}</span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      ${reclamo.montoReclamado.toLocaleString()}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {poliza.vencimiento}
+                    <div className="flex items-center">
+                      <Calendar className="w-4 h-4 mr-2 text-gray-400" />
+                      {reclamo.fechaIncidente}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span 
                       className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white"
-                      style={{backgroundColor: getStatusColor(poliza.estado)}}
+                      style={{backgroundColor: getStatusColor(reclamo.estado)}}
                     >
-                      {getStatusIcon(poliza.estado)}
-                      <span className="ml-1">{poliza.estado}</span>
+                      {getStatusIcon(reclamo.estado)}
+                      <span className="ml-1">{reclamo.estado}</span>
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -221,7 +228,7 @@ const Polizas = ({ polizas, setPolizas, permissions }) => {
                         <Eye className="w-4 h-4" />
                       </button>
                       {permissions?.canEdit && (
-                        <button className="text-green-600 hover:text-green-900 transition-colors">
+                        <button className="text-orange-600 hover:text-orange-900 transition-colors">
                           <Edit className="w-4 h-4" />
                         </button>
                       )}
@@ -233,12 +240,12 @@ const Polizas = ({ polizas, setPolizas, permissions }) => {
           </table>
         </div>
 
-        {filteredPolizas.length === 0 && (
+        {filteredReclamos.length === 0 && (
           <div className="text-center py-12">
-            <FileText className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <p className="text-gray-500 mb-2">No se encontraron pólizas</p>
+            <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+            <p className="text-gray-500 mb-2">No se encontraron reclamos</p>
             <p className="text-sm text-gray-400">
-              {searchTerm ? 'Intenta con un término de búsqueda diferente' : 'Comienza creando una nueva póliza'}
+              {searchTerm ? 'Intenta con un término de búsqueda diferente' : 'No hay reclamos registrados'}
             </p>
           </div>
         )}
@@ -247,4 +254,4 @@ const Polizas = ({ polizas, setPolizas, permissions }) => {
   );
 };
 
-export default Polizas;
+export default Reclamos;

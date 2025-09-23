@@ -10,10 +10,11 @@ import {
   Mail, 
   MapPin,
   Calendar,
-  FileText
+  FileText,
+  Trash2
 } from 'lucide-react';
 
-const Clientes = ({ clientes, setClientes }) => {
+const Clientes = ({ clientes, setClientes, permissions }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('todos');
 
@@ -38,10 +39,6 @@ const Clientes = ({ clientes, setClientes }) => {
               <p className="text-gray-600">Administra la información de todos los clientes</p>
             </div>
           </div>
-          <button className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-            <Plus className="w-4 h-4 mr-2" />
-            Nuevo Cliente
-          </button>
         </div>
 
         {/* Búsqueda */}
@@ -117,9 +114,11 @@ const Clientes = ({ clientes, setClientes }) => {
                   <button className="text-blue-600 hover:text-blue-900 transition-colors">
                     <Eye className="w-4 h-4" />
                   </button>
-                  <button className="text-green-600 hover:text-green-900 transition-colors">
-                    <Edit className="w-4 h-4" />
-                  </button>
+                  {permissions?.canDelete && (
+                    <button className="text-red-600 hover:text-red-900 transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
               
