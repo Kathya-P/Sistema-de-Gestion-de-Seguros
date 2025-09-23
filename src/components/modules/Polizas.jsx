@@ -328,7 +328,7 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
     doc.text('SEGUROS VEHICULARES - Sistema de Gestión', 105, 285, { align: 'center' });
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.text('Tel: (503) 2XXX-XXXX | Email: info@segurosvehiculares.com', 105, 292, { align: 'center' });
+    doc.text('Tel: (503) 2245-7890 | Email: info@segurosvehiculares.com', 105, 292, { align: 'center' });
     
     // Descargar el PDF
     doc.save(`Poliza_${poliza.numeroPoliza}.pdf`);
