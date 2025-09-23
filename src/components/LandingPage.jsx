@@ -178,24 +178,6 @@ const LandingPage = ({ onShowLogin, onShowRegister }) => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-blue-800">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold text-white mb-4">
-            ¿Listo para proteger tu futuro?
-          </h2>
-          <p className="text-xl text-blue-100 mb-8">
-            Únete a miles de clientes que ya confían en nosotros para su seguridad
-          </p>
-          <button
-            onClick={onShowRegister}
-            className="px-8 py-4 bg-white text-blue-600 rounded-lg hover:bg-gray-100 transition-colors font-semibold text-lg shadow-lg"
-          >
-            Crear Cuenta Gratuita
-          </button>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
