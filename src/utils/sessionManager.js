@@ -198,15 +198,42 @@ function generateSessionId() {
 // Hook para verificar permisos
 export const usePermissions = () => {
   const currentUser = sessionManager.getCurrentUser();
+  const userRole = currentUser ? currentUser.rol : 'guest';
   
   return {
-    canCreate: currentUser && (currentUser.rol === 'admin' || currentUser.rol === 'agente'),
-    canEdit: currentUser && (currentUser.rol === 'admin' || currentUser.rol === 'agente'),
-    canDelete: currentUser && (currentUser.rol === 'admin'),
-    canViewReports: currentUser && (currentUser.rol === 'admin' || currentUser.rol === 'agente'),
-    canManageUsers: currentUser && (currentUser.rol === 'admin'),
+    // Permisos básicos de CRUD
+    canCreate: currentUser && (userRole === 'admin' || userRole === 'agente'),
+    canEdit: currentUser && (userRole === 'admin' || userRole === 'agente'),
+    canDelete: currentUser && (userRole === 'admin'),
+    canApprove: currentUser && (userRole === 'admin' || userRole === 'agente'),
+    
+    // Permisos por módulo
+    canViewAllPolizas: currentUser && (userRole === 'admin' || userRole === 'agente'),
+    canViewOwnPolizas: currentUser !== null, // Todos pueden ver sus propias pólizas
+    
+    canViewAllClientes: currentUser && (userRole === 'admin' || userRole === 'agente'),
+    canViewClients: currentUser && (userRole === 'admin' || userRole === 'agente'), // Solo admin y agente ven módulo clientes
+    
+    canViewAllReclamos: currentUser && (userRole === 'admin' || userRole === 'agente'),
+    canViewOwnReclamos: currentUser !== null, // Todos pueden ver sus propios reclamos
+    
+    canViewFraudes: currentUser && (userRole === 'admin' || userRole === 'agente'), // Solo admin y agente
+    canViewReports: currentUser && (userRole === 'admin' || userRole === 'agente'), // Solo admin y agente
+    
+    canProcessCotizaciones: currentUser && (userRole === 'admin' || userRole === 'agente'),
+    canRequestCotizaciones: currentUser !== null, // Todos pueden solicitar cotizaciones
+    
+    canViewAllAccidentes: currentUser && (userRole === 'admin' || userRole === 'agente'),
+    canReportAccidentes: currentUser !== null, // Todos pueden reportar accidentes
+    
+    canManageUsers: currentUser && (userRole === 'admin'), // Solo admin
     canViewOwnData: currentUser !== null, // Todos los usuarios logueados pueden ver sus propios datos
+    
+    // Estado general
     isLoggedIn: currentUser !== null,
-    userRole: currentUser ? currentUser.rol : 'guest'
+    userRole: userRole,
+    isAdmin: userRole === 'admin',
+    isAgente: userRole === 'agente', 
+    isCliente: userRole === 'cliente'
   };
 };

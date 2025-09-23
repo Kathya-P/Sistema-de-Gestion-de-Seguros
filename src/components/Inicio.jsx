@@ -16,8 +16,27 @@ const Inicio = ({
   polizas, 
   reclamos, 
   clientes, 
-  setActiveModule 
-}) => (
+  setActiveModule,
+  permissions 
+}) => {
+  
+  // Función para verificar si el usuario puede acceder a un módulo
+  const canAccessModule = (module) => {
+    if (!permissions) return false;
+    
+    switch (module) {
+      case 'clientes':
+        return permissions.canViewClients;
+      case 'fraudes':
+        return permissions.canViewFraudes;
+      case 'reportes':
+        return permissions.canViewReports;
+      default:
+        return true; // inicio, polizas, cotizaciones, reclamos, accidentes están disponibles para todos
+    }
+  };
+
+  return (
   <div className="space-y-5">
     {/* Header con más información */}
     <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg shadow-sm border border-gray-100 p-8">
@@ -62,6 +81,7 @@ const Inicio = ({
             </div>
           </div>
 
+          {canAccessModule('clientes') && (
           <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 h-20 flex items-center">
             <div className="flex justify-between items-center w-full">
               <div>
@@ -71,6 +91,7 @@ const Inicio = ({
               <Users className="w-8 h-8" style={{color: '#2d5016', opacity: 0.3}} />
             </div>
           </div>
+          )}
 
           <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 h-20 flex items-center">
             <div className="flex justify-between items-center w-full">
@@ -129,6 +150,7 @@ const Inicio = ({
             </div>
           </div>
 
+          {canAccessModule('fraudes') && (
           <div 
             onClick={() => setActiveModule('fraudes')}
             className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-105 flex flex-col justify-center min-h-[120px]"
@@ -141,6 +163,7 @@ const Inicio = ({
               <p className="text-gray-600 text-xs">Detección inteligente</p>
             </div>
           </div>
+          )}
 
           <div 
             onClick={() => setActiveModule('accidentes')}
@@ -155,6 +178,7 @@ const Inicio = ({
             </div>
           </div>
 
+          {canAccessModule('clientes') && (
           <div 
             onClick={() => setActiveModule('clientes')}
             className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-105 flex flex-col justify-center min-h-[120px]"
@@ -167,6 +191,7 @@ const Inicio = ({
               <p className="text-gray-600 text-xs">Gestiona clientes</p>
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>
@@ -244,6 +269,7 @@ const Inicio = ({
             <span className="text-xs text-gray-500">→</span>
           </button>
 
+          {canAccessModule('clientes') && (
           <button 
             onClick={() => setActiveModule('clientes')}
             className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all duration-200"
@@ -254,6 +280,7 @@ const Inicio = ({
             </div>
             <span className="text-xs text-gray-500">→</span>
           </button>
+          )}
 
           <button 
             onClick={() => setActiveModule('reclamos')}
@@ -285,6 +312,7 @@ const Inicio = ({
       </div>
     </div>
   </div>
-);
+  );
+};
 
 export default Inicio;

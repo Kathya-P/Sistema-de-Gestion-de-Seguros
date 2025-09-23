@@ -16,7 +16,7 @@ import Reportes from './components/modules/Reportes';
 import GuestBanner from './components/auth/GuestBanner';
 
 // Importar datos mock y utilidades
-import { menuItems, mockPolizas, mockReclamos, mockClientes, getPageTitle } from './data/mockData';
+import { getMenuForRole, mockPolizas, mockReclamos, mockClientes, getPageTitle } from './data/mockData';
 import { sessionManager, usePermissions, userManager } from './utils/sessionManager';
 
 const SistemaGestionSeguros = () => {
@@ -36,6 +36,25 @@ const SistemaGestionSeguros = () => {
 
   // Obtener permisos actuales
   const permissions = usePermissions();
+  
+  // Obtener menú filtrado por rol del usuario
+  const menuItems = getMenuForRole(permissions.userRole);
+
+  // Verificar si el usuario tiene acceso al módulo actual
+  const hasAccessToModule = (moduleId) => {
+    return menuItems.some(item => item.id === moduleId);
+  };
+
+  // Función para cambiar módulo con validación de permisos
+  const handleModuleChange = (moduleId) => {
+    if (hasAccessToModule(moduleId)) {
+      setActiveModule(moduleId);
+    } else {
+      console.warn(`Acceso denegado al módulo: ${moduleId}`);
+      // Redirigir a inicio si no tiene acceso
+      setActiveModule('inicio');
+    }
+  };
 
   // Verificar sesión al cargar la app
   useEffect(() => {
@@ -156,9 +175,28 @@ const SistemaGestionSeguros = () => {
 
   // Función para renderizar contenido según el módulo 
   const renderContent = () => {
+    // Verificar acceso al módulo actual
+    if (!hasAccessToModule(activeModule)) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <Shield className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Acceso Denegado</h3>
+            <p className="text-gray-600">No tienes permisos para acceder a este módulo.</p>
+            <button 
+              onClick={() => setActiveModule('inicio')}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Ir al Inicio
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     switch (activeModule) {
       case 'inicio':
-        return <Inicio polizas={polizas} reclamos={reclamos} clientes={clientes} setActiveModule={setActiveModule} permissions={permissions} />;
+        return <Inicio polizas={polizas} reclamos={reclamos} clientes={clientes} setActiveModule={handleModuleChange} permissions={permissions} />;
       case 'polizas':
         return <Polizas polizas={polizas} setPolizas={setPolizas} permissions={permissions} />;
       case 'clientes':
@@ -174,7 +212,7 @@ const SistemaGestionSeguros = () => {
       case 'reportes':
         return <Reportes permissions={permissions} />;
       default:
-        return <Inicio polizas={polizas} reclamos={reclamos} clientes={clientes} setActiveModule={setActiveModule} permissions={permissions} />;
+        return <Inicio polizas={polizas} reclamos={reclamos} clientes={clientes} setActiveModule={handleModuleChange} permissions={permissions} />;
     }
   };
 
@@ -279,7 +317,7 @@ const SistemaGestionSeguros = () => {
                   {menuItems.map((item) => (
                     <li key={item.id} className="nav-item">
                       <button
-                        onClick={() => setActiveModule(item.id)}
+                        onClick={() => handleModuleChange(item.id)}
                         className={`nav-button ${activeModule === item.id ? 'active' : ''}`}
                       >
                         <item.icon className="w-5 h-5" />
