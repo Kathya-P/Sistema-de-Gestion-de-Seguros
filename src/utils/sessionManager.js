@@ -69,6 +69,19 @@ export const sessionManager = {
     }
   },
 
+  // Limpiar todos los datos (útil para reset completo)
+  clearAllData: () => {
+    try {
+      localStorage.removeItem(SESSION_FILE_KEY);
+      localStorage.removeItem(USERS_FILE_KEY);
+      console.log('🔄 Todos los datos eliminados - Sistema reiniciado');
+      return true;
+    } catch (error) {
+      console.error('Error eliminando datos:', error);
+      return false;
+    }
+  },
+
   // Actualizar tiempo de sesión
   refreshSession: () => {
     const session = sessionManager.getSession();
@@ -92,11 +105,22 @@ export const userManager = {
             id: 1,
             username: 'admin',
             password: 'admin123',
-            name: 'Administrador del Sistema',
+            name: 'Administrador',
             email: 'admin@securetech.com',
             phone: '2234-0000',
             role: 'Administrador',
             rol: 'admin',
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: 2,
+            username: 'maria.lopez',
+            password: 'agente123',
+            name: 'María López',
+            email: 'maria.lopez@securetech.com',
+            phone: '2234-1111',
+            role: 'Cliente',
+            rol: 'agente',
             createdAt: new Date().toISOString()
           }
         ];
@@ -143,7 +167,7 @@ export const userManager = {
         email: userData.email,
         phone: userData.phone,
         role: userData.role === 'admin' ? 'Administrador' : 
-              userData.role === 'agente' ? 'Agente' : 'Cliente',
+              userData.role === 'agente' ? 'Cliente' : 'Cliente',
         rol: userData.role,
         createdAt: new Date().toISOString()
       };
