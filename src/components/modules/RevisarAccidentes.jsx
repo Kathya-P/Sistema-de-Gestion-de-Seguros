@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Car, 
   AlertTriangle, 
@@ -19,8 +19,6 @@ import {
   Image,
   Download
 } from 'lucide-react';
-
-const LOCALSTORAGE_KEY = 'accidentes_data';
 
 const RevisarAccidentes = ({ permissions }) => {
   const [activeTab, setActiveTab] = useState('lista');
@@ -215,42 +213,6 @@ const RevisarAccidentes = ({ permissions }) => {
     enInvestigacion: filteredAccidentes.filter(a => a.estado === 'En investigación').length,
     completados: filteredAccidentes.filter(a => a.estado === 'Completado').length
   };
-
-  // Cargar accidentes desde localStorage al montar el componente
-  useEffect(() => {
-    // Si eres admin, intenta cargar datos reales de la API
-    if (permissions?.isAdmin) {
-      fetch('/api/accidentes')
-        .then(res => res.ok ? res.json() : Promise.reject())
-        .then(data => {
-          if (Array.isArray(data)) {
-            setAccidentes(data);
-          }
-        })
-        .catch(() => {
-          // Si falla, usa localStorage como respaldo
-          const stored = localStorage.getItem(LOCALSTORAGE_KEY);
-          if (stored) {
-            try {
-              setAccidentes(JSON.parse(stored));
-            } catch (e) {}
-          }
-        });
-    } else {
-      // Si no eres admin, carga desde localStorage
-      const stored = localStorage.getItem(LOCALSTORAGE_KEY);
-      if (stored) {
-        try {
-          setAccidentes(JSON.parse(stored));
-        } catch (e) {}
-      }
-    }
-  }, [permissions?.isAdmin]);
-
-  // Guardar accidentes en localStorage cada vez que cambian
-  useEffect(() => {
-    localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(accidentes));
-  }, [accidentes]);
 
   return (
     <div className="space-y-6">
