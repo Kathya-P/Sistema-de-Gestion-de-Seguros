@@ -14,8 +14,8 @@ import RevisarAccidentes from './components/modules/RevisarAccidentes';
 import Reportes from './components/modules/Reportes';
 import GuestBanner from './components/auth/GuestBanner';
 
-// Importar datos mock y utilidades
-import { getMenuForRole, mockPolizas, mockReclamos, mockClientes, getPageTitle } from './data/mockData';
+// Importar datos y utilidades
+import { getMenuForRole, getPageTitle } from './data/appData';
 import { sessionManager, usePermissions, userManager } from './utils/sessionManager';
 
 const SistemaSeguroVehicular = () => {
@@ -28,8 +28,8 @@ const SistemaSeguroVehicular = () => {
 
   // Estados principales
   const [activeModule, setActiveModule] = useState('inicio');
-  const [polizas, setPolizas] = useState(mockPolizas);
-  const [clientes, setClientes] = useState(mockClientes);
+  const [polizas, setPolizas] = useState([]);
+  const [clientes, setClientes] = useState([]);
   const [resultadoCotizacion, setResultadoCotizacion] = useState(null);
 
   // Obtener permisos actuales
@@ -204,7 +204,7 @@ const SistemaSeguroVehicular = () => {
       case 'fraudes':
         return <DeteccionFraudes permissions={permissions} />;
       case 'accidentes':
-        return <RevisarAccidentes permissions={permissions} />;
+        return <RevisarAccidentes permissions={permissions} polizas={polizas} />;
       case 'reportes':
         return <Reportes permissions={permissions} />;
       default:

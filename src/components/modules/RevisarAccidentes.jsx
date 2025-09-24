@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Car, 
   AlertTriangle, 
@@ -20,94 +20,70 @@ import {
   Download
 } from 'lucide-react';
 
-const RevisarAccidentes = ({ permissions }) => {
+const RevisarAccidentes = ({ permissions, polizas }) => {
   const [activeTab, setActiveTab] = useState('lista');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterEstado, setFilterEstado] = useState('todos');
   const [filterGravedad, setFilterGravedad] = useState('todos');
   const [mostrarModal, setMostrarModal] = useState(false);
   const [accidenteSeleccionado, setAccidenteSeleccionado] = useState(null);
+  const [vehiculosAsegurados, setVehiculosAsegurados] = useState([]);
+  const [accidentes, setAccidentes] = useState([]);
 
-  const [accidentes, setAccidentes] = useState([
-    {
-      id: 1,
-      numeroReporte: 'ACC-001',
-      cliente: 'Juan Pérez',
-      vehiculo: 'Toyota Corolla 2020',
-      placa: 'ABC-123',
-      ubicacion: 'Av. Principal con Calle 5',
-      fecha: '2024-09-18',
-      hora: '14:30',
-      estado: 'En investigación',
-      gravedad: 'Leve',
-      ajustador: 'Carlos Ramírez',
-      descripcion: 'Colisión menor en intersección, daños en parachoques delantero',
-      fotos: ['foto1.jpg', 'foto2.jpg'],
-      documentos: ['reporte_policial.pdf', 'declaracion.pdf'],
-      montoEstimado: 15000,
-      fechaAsignacion: '2024-09-19'
-    },
-    {
-      id: 2,
-      numeroReporte: 'ACC-002',
-      cliente: 'María González',
-      vehiculo: 'Honda Civic 2019',
-      placa: 'XYZ-789',
-      ubicacion: 'Autopista Norte Km 15',
-      fecha: '2024-09-16',
-      hora: '09:15',
-      estado: 'Completado',
-      gravedad: 'Moderado',
-      ajustador: 'Ana Martínez',
-      descripcion: 'Accidente de tráfico con vehículo detenido, daños significativos',
-      fotos: ['foto3.jpg', 'foto4.jpg', 'foto5.jpg'],
-      documentos: ['reporte_final.pdf', 'peritaje.pdf'],
-      montoEstimado: 35000,
-      fechaAsignacion: '2024-09-16',
-      fechaCompletado: '2024-09-20'
-    },
-    {
-      id: 3,
-      numeroReporte: 'ACC-003',
-      cliente: 'Roberto Silva',
-      vehiculo: 'Nissan Sentra 2021',
-      placa: 'DEF-456',
-      ubicacion: 'Centro Comercial Plaza Mayor',
-      fecha: '2024-09-22',
-      hora: '16:45',
-      estado: 'Reportado',
-      gravedad: 'Grave',
-      ajustador: null,
-      descripcion: 'Colisión múltiple en estacionamiento con heridos',
-      fotos: ['foto6.jpg'],
-      documentos: ['reporte_inicial.pdf'],
-      montoEstimado: 85000,
-      fechaAsignacion: null
+  // Actualizar la lista de vehículos asegurados cuando cambien las pólizas
+  useEffect(() => {
+    console.log('Polizas recibidas:', polizas);
+    console.log('Permissions:', permissions);
+    
+    if (permissions?.isCliente && permissions?.getCurrentUser?.()) {
+      const currentUser = permissions.getCurrentUser();
+      console.log('Current user:', currentUser);
+
+      const vehiculos = polizas
+        .filter(poliza => {
+          console.log('Evaluando póliza:', poliza);
+          return poliza.cliente === currentUser.name && poliza.estado === 'Activa';
+        })
+        .map(poliza => ({
+          id: poliza.id,
+          marca: poliza.marca || poliza.vehiculo?.marca,
+          modelo: poliza.modelo || poliza.vehiculo?.modelo,
+          año: poliza.año || poliza.vehiculo?.año,
+          placa: poliza.placa || poliza.vehiculo?.placa,
+          polizaId: poliza.numeroPoliza || poliza.id
+        }));
+      
+      console.log('Vehículos filtrados:', vehiculos);
+      setVehiculosAsegurados(vehiculos);
     }
-  ]);
+  }, [polizas, permissions]);
 
   const [nuevoAccidente, setNuevoAccidente] = useState({
-    vehiculo: '',
+    polizaId: '',
+    vehiculoId: '',
+    marca: '',
+    modelo: '',
+    año: '',
     placa: '',
     ubicacion: '',
     fecha: '',
     hora: '',
     descripcion: '',
-    gravedad: 'Leve'
+    gravedad: 'Leve',
+    tipoAccidente: '',
+    hayHeridos: false,
+    descripcionDaños: '',
+    fotos: [],
+    documentos: []
   });
 
-  const ajustadores = [
-    { id: 1, nombre: 'Carlos Ramírez', especialidad: 'Daños menores' },
-    { id: 2, nombre: 'Ana Martínez', especialidad: 'Accidentes graves' },
-    { id: 3, nombre: 'Pedro López', especialidad: 'Investigación especializada' },
-    { id: 4, nombre: 'Carmen Vega', especialidad: 'Peritaje técnico' }
-  ];
+  const ajustadores = [];
 
   const filteredAccidentes = accidentes.filter(accidente => {
     // Si es cliente, solo mostrar sus propios accidentes
     if (permissions?.isCliente) {
-      const currentUser = permissions?.getCurrentUser?.() || { name: 'Juan Pérez' }; // Por ahora hardcoded
-      if (accidente.cliente !== currentUser.name) {
+      const currentUser = permissions?.getCurrentUser?.();
+      if (currentUser && accidente.cliente !== currentUser.name) {
         return false;
       }
     }
@@ -122,32 +98,63 @@ const RevisarAccidentes = ({ permissions }) => {
   });
 
   const handleReportarAccidente = () => {
-    const nuevoId = Math.max(...accidentes.map(a => a.id)) + 1;
+    // Validaciones
+    if (!nuevoAccidente.vehiculoId || !nuevoAccidente.fecha || !nuevoAccidente.hora || 
+        !nuevoAccidente.ubicacion || !nuevoAccidente.tipoAccidente || !nuevoAccidente.descripcionDaños) {
+      alert('Por favor complete todos los campos requeridos');
+      return;
+    }
+
+    const nuevoId = accidentes.length > 0 ? Math.max(...accidentes.map(a => a.id)) + 1 : 1;
     const numeroReporte = `ACC-${String(nuevoId).padStart(3, '0')}`;
-    const currentUser = permissions?.getCurrentUser?.() || { name: 'Juan Pérez' };
+    const currentUser = permissions?.getCurrentUser?.();
     
+    if (!currentUser) {
+      alert('Error: No se pudo identificar al usuario');
+      return;
+    }
+
     const accidente = {
       id: nuevoId,
       numeroReporte,
       cliente: currentUser.name,
-      ...nuevoAccidente,
+      polizaId: nuevoAccidente.polizaId,
+      vehiculo: `${nuevoAccidente.marca} ${nuevoAccidente.modelo} ${nuevoAccidente.año}`,
+      placa: nuevoAccidente.placa,
+      ubicacion: nuevoAccidente.ubicacion,
+      fecha: nuevoAccidente.fecha,
+      hora: nuevoAccidente.hora,
+      tipoAccidente: nuevoAccidente.tipoAccidente,
+      hayHeridos: nuevoAccidente.hayHeridos,
+      descripcionDaños: nuevoAccidente.descripcionDaños,
       estado: 'Reportado',
+      gravedad: nuevoAccidente.gravedad,
       ajustador: null,
-      fotos: [],
-      documentos: [],
+      fotos: nuevoAccidente.fotos,
+      documentos: nuevoAccidente.documentos,
       montoEstimado: 0,
+      fechaReporte: new Date().toISOString().split('T')[0],
       fechaAsignacion: null
     };
 
     setAccidentes(prev => [...prev, accidente]);
     setNuevoAccidente({
-      vehiculo: '',
+      polizaId: '',
+      vehiculoId: '',
+      marca: '',
+      modelo: '',
+      año: '',
       placa: '',
       ubicacion: '',
       fecha: '',
       hora: '',
       descripcion: '',
-      gravedad: 'Leve'
+      gravedad: 'Leve',
+      tipoAccidente: '',
+      hayHeridos: false,
+      descripcionDaños: '',
+      fotos: [],
+      documentos: []
     });
     setActiveTab('lista');
   };
@@ -204,6 +211,261 @@ const RevisarAccidentes = ({ permissions }) => {
       case 'Cerrado': return <FileText className="w-4 h-4" />;
       default: return <AlertTriangle className="w-4 h-4" />;
     }
+  };
+
+  const handleVehiculoChange = (vehiculoId) => {
+    const vehiculo = vehiculosAsegurados.find(v => v.id === vehiculoId);
+    if (vehiculo) {
+      setNuevoAccidente(prev => ({
+        ...prev,
+        vehiculoId: vehiculo.id,
+        polizaId: vehiculo.polizaId,
+        marca: vehiculo.marca,
+        modelo: vehiculo.modelo,
+        año: vehiculo.año,
+        placa: vehiculo.placa
+      }));
+    }
+  };
+
+  const handleFileChange = (e, type) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      setNuevoAccidente(prev => ({
+        ...prev,
+        [type]: [...prev[type], ...files]
+      }));
+    }
+  };
+
+  const renderReporteForm = () => {
+    if (activeTab !== 'nuevo') return null;
+
+    if (vehiculosAsegurados.length === 0) {
+      return (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+          <div className="text-center">
+            <AlertTriangle className="mx-auto h-12 w-12 text-yellow-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay vehículos asegurados</h3>
+            <p className="text-gray-500">
+              Para reportar un accidente, primero debe tener una póliza activa para su vehículo.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 space-y-6">
+        <h3 className="text-xl font-semibold text-gray-900">Reportar Nuevo Accidente</h3>
+        
+        {/* Selector de Vehículo */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Seleccione el Vehículo Asegurado
+          </label>
+          <select
+            value={nuevoAccidente.vehiculoId}
+            onChange={(e) => handleVehiculoChange(e.target.value)}
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+          >
+            <option value="">Seleccione un vehículo</option>
+            {vehiculosAsegurados.map(vehiculo => (
+              <option key={vehiculo.id} value={vehiculo.id}>
+                {vehiculo.marca} {vehiculo.modelo} {vehiculo.año} - Placa: {vehiculo.placa}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {nuevoAccidente.vehiculoId && (
+          <>
+            {/* Detalles del Accidente */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Fecha del Accidente
+                </label>
+                <input
+                  type="date"
+                  value={nuevoAccidente.fecha}
+                  onChange={(e) => setNuevoAccidente(prev => ({...prev, fecha: e.target.value}))}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Hora del Accidente
+                </label>
+                <input
+                  type="time"
+                  value={nuevoAccidente.hora}
+                  onChange={(e) => setNuevoAccidente(prev => ({...prev, hora: e.target.value}))}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Ubicación
+                </label>
+                <input
+                  type="text"
+                  value={nuevoAccidente.ubicacion}
+                  onChange={(e) => setNuevoAccidente(prev => ({...prev, ubicacion: e.target.value}))}
+                  placeholder="Dirección exacta del accidente"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Tipo de Accidente
+                </label>
+                <select
+                  value={nuevoAccidente.tipoAccidente}
+                  onChange={(e) => setNuevoAccidente(prev => ({...prev, tipoAccidente: e.target.value}))}
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                  required
+                >
+                  <option value="">Seleccione el tipo</option>
+                  <option value="Colisión">Colisión</option>
+                  <option value="Volcadura">Volcadura</option>
+                  <option value="Atropello">Atropello</option>
+                  <option value="Choque con objeto fijo">Choque con objeto fijo</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                ¿Hay personas heridas?
+              </label>
+              <div className="mt-2">
+                <label className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    name="hayHeridos"
+                    checked={nuevoAccidente.hayHeridos}
+                    onChange={() => setNuevoAccidente(prev => ({...prev, hayHeridos: true}))}
+                    className="form-radio h-4 w-4 text-blue-600"
+                  />
+                  <span className="ml-2">Sí</span>
+                </label>
+                <label className="inline-flex items-center ml-6">
+                  <input
+                    type="radio"
+                    name="hayHeridos"
+                    checked={!nuevoAccidente.hayHeridos}
+                    onChange={() => setNuevoAccidente(prev => ({...prev, hayHeridos: false}))}
+                    className="form-radio h-4 w-4 text-blue-600"
+                  />
+                  <span className="ml-2">No</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Descripción del Accidente
+              </label>
+              <textarea
+                value={nuevoAccidente.descripcionDaños}
+                onChange={(e) => setNuevoAccidente(prev => ({...prev, descripcionDaños: e.target.value}))}
+                rows={4}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="Describa detalladamente lo ocurrido, incluyendo los daños al vehículo y/o a terceros"
+                required
+              />
+            </div>
+
+            {/* Evidencias */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Fotos del Accidente
+                </label>
+                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                  <div className="space-y-1 text-center">
+                    <Camera className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="flex text-sm text-gray-600">
+                      <label className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500">
+                        <span>Subir fotos</span>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={(e) => handleFileChange(e, 'fotos')}
+                          className="sr-only"
+                        />
+                      </label>
+                    </div>
+                    <p className="text-xs text-gray-500">PNG, JPG hasta 10MB</p>
+                  </div>
+                </div>
+                {nuevoAccidente.fotos.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">{nuevoAccidente.fotos.length} fotos seleccionadas</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Documentos Adicionales
+                </label>
+                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                  <div className="space-y-1 text-center">
+                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="flex text-sm text-gray-600">
+                      <label className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500">
+                        <span>Subir documentos</span>
+                        <input
+                          type="file"
+                          multiple
+                          accept=".pdf,.doc,.docx"
+                          onChange={(e) => handleFileChange(e, 'documentos')}
+                          className="sr-only"
+                        />
+                      </label>
+                    </div>
+                    <p className="text-xs text-gray-500">PDF, DOC, DOCX hasta 10MB</p>
+                  </div>
+                </div>
+                {nuevoAccidente.documentos.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">{nuevoAccidente.documentos.length} documentos seleccionados</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Botones de acción */}
+            <div className="flex justify-end space-x-4">
+              <button
+                type="button"
+                onClick={() => setActiveTab('lista')}
+                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleReportarAccidente}
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Reportar Accidente
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    );
   };
 
   // Métricas
