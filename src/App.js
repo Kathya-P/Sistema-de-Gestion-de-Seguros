@@ -69,10 +69,22 @@ const SistemaSeguroVehicular = () => {
     setPolizas(polizasGuardadas);
     console.log('🔄 Pólizas cargadas:', polizasGuardadas);
 
-    // Cargar clientes del localStorage al inicializar la app
-    const clientesGuardados = JSON.parse(localStorage.getItem('users') || '[]').filter(user => user.role === 'Cliente');
-    setClientes(clientesGuardados);
-    console.log('🔄 Clientes cargados:', clientesGuardados);
+    // Cargar usuarios registrados como clientes
+    const registeredUsers = userManager.getAllUsers();
+    console.log('Usuarios registrados:', registeredUsers);
+    const clientesRegistrados = registeredUsers
+      .filter(user => user.rol !== 'admin' && user.role !== 'Administrador') // Excluir administradores
+      .map(user => ({
+        id: user.id,
+        nombre: user.name,
+        email: user.email,
+        numeroDocumento: user.username,
+        telefono: user.phone || '',
+        polizasActivas: polizasGuardadas.filter(p => p.cliente === user.name && p.estado === 'Aprobada').length,
+        fechaRegistro: user.createdAt
+      }));
+    console.log('Clientes procesados:', clientesRegistrados);
+    setClientes(clientesRegistrados);
   }, []);
 
   // Funciones de autenticación
@@ -87,6 +99,22 @@ const SistemaSeguroVehicular = () => {
       // Guardar sesión
       sessionManager.saveSession(user);
       console.log('✅ Login exitoso y sesión guardada:', user);
+
+      // Actualizar lista de clientes si es necesario
+      const registeredUsers = userManager.getAllUsers();
+      const clientesRegistrados = registeredUsers
+        .filter(u => u.rol !== 'admin' && u.role !== 'Administrador')
+        .map(u => ({
+          id: u.id,
+          nombre: u.name,
+          email: u.email,
+          numeroDocumento: u.username,
+          telefono: u.phone || '',
+          polizasActivas: polizas.filter(p => p.cliente === u.name && p.estado === 'Aprobada').length,
+          fechaRegistro: u.createdAt
+        }));
+      setClientes(clientesRegistrados);
+      
       return true;
     }
     return false;
@@ -95,8 +123,20 @@ const SistemaSeguroVehicular = () => {
   const handleRegister = (userData) => {
     const success = userManager.registerUser(userData);
     if (success) {
-      // Después del registro exitoso, el usuario puede hacer login inmediatamente
-      // La landing page se mantiene visible hasta que haga login
+      // Después del registro exitoso, actualizar la lista de clientes
+      const registeredUsers = userManager.getAllUsers();
+      const clientesRegistrados = registeredUsers
+        .filter(user => user.rol !== 'admin' && user.role !== 'Administrador')
+        .map(user => ({
+          id: user.id,
+          nombre: user.name,
+          email: user.email,
+          numeroDocumento: user.username,
+          telefono: user.phone || '',
+          polizasActivas: polizas.filter(p => p.cliente === user.name && p.estado === 'Aprobada').length,
+          fechaRegistro: user.createdAt
+        }));
+      setClientes(clientesRegistrados);
     }
     return success;
   };
