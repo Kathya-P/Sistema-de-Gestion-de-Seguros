@@ -19,8 +19,9 @@ import {
   Image,
   Download
 } from 'lucide-react';
+import { sessionManager } from '../../utils/sessionManager';
 
-const RevisarAccidentes = ({ permissions, polizas }) => {
+const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
   const [activeTab, setActiveTab] = useState('lista');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterEstado, setFilterEstado] = useState('todos');
@@ -32,29 +33,84 @@ const RevisarAccidentes = ({ permissions, polizas }) => {
 
   // Actualizar la lista de vehículos asegurados cuando cambien las pólizas
   useEffect(() => {
-    console.log('Polizas recibidas:', polizas);
-    console.log('Permissions:', permissions);
+    console.log('🔍 Datos recibidos en RevisarAccidentes:');
+    console.log('   - Polizas:', polizas);
+    console.log('   - Permissions:', permissions);
     
-    if (permissions?.isCliente && permissions?.getCurrentUser?.()) {
-      const currentUser = permissions.getCurrentUser();
-      console.log('Current user:', currentUser);
+    // Obtener usuario actual directamente del sessionManager
+    const currentUser = sessionManager.getCurrentUser();
+    console.log('   - Usuario actual (sessionManager):', currentUser);
+    
+    if (permissions?.isCliente && currentUser) {
+      console.log('   - Usuario cliente identificado:', currentUser);
 
-      const vehiculos = polizas
-        .filter(poliza => {
-          console.log('Evaluando póliza:', poliza);
-          return poliza.cliente === currentUser.name && poliza.estado === 'Activa';
-        })
-        .map(poliza => ({
-          id: poliza.id,
-          marca: poliza.marca || poliza.vehiculo?.marca,
-          modelo: poliza.modelo || poliza.vehiculo?.modelo,
-          año: poliza.año || poliza.vehiculo?.año,
-          placa: poliza.placa || poliza.vehiculo?.placa,
-          polizaId: poliza.numeroPoliza || poliza.id
-        }));
-      
-      console.log('Vehículos filtrados:', vehiculos);
-      setVehiculosAsegurados(vehiculos);
+      if (polizas && polizas.length > 0) {
+        const vehiculos = polizas
+          .filter(poliza => {
+            console.log('   - Evaluando póliza:', {
+              id: poliza.id,
+              numeroPoliza: poliza.numeroPoliza,
+              titular: poliza.titular,
+              clienteId: poliza.clienteId,
+              clienteName: poliza.clienteName,
+              estado: poliza.estado,
+              currentUserId: currentUser?.id,
+              currentUserName: currentUser?.name
+            });
+            
+            // Verificar múltiples formas de coincidencia
+            const matchesById = poliza.clienteId === currentUser?.id;
+            const matchesByName = poliza.titular === currentUser?.name || poliza.clienteName === currentUser?.name;
+            const matchesByTitular = poliza.titular?.toLowerCase() === currentUser?.name?.toLowerCase();
+            const isActive = poliza.estado === 'Activa';
+            
+            console.log('   - Coincidencias:', {
+              matchesById,
+              matchesByName,
+              matchesByTitular,
+              isActive,
+              finalMatch: (matchesById || matchesByName || matchesByTitular) && isActive
+            });
+            
+            return (matchesById || matchesByName || matchesByTitular) && isActive;
+          })
+          .map(poliza => ({
+            id: poliza.id || poliza.numeroPoliza,
+            marca: poliza.marca || poliza.vehiculo?.split(' ')[0] || 'N/A',
+            modelo: poliza.modelo || poliza.vehiculo?.split(' ')[1] || 'N/A',
+            año: poliza.año || poliza.vehiculo?.split(' ')[2] || 'N/A',
+            placa: poliza.placa || 'N/A',
+            polizaId: poliza.numeroPoliza || poliza.id,
+            vehiculoCompleto: poliza.vehiculo
+          }));
+        
+        console.log('   - Vehículos filtrados:', vehiculos);
+        setVehiculosAsegurados(vehiculos);
+      } else {
+        console.log('   - No hay pólizas disponibles');
+        setVehiculosAsegurados([]);
+      }
+    } else if (permissions?.isAdmin) {
+      // Para administradores, mostrar todas las pólizas activas
+      console.log('   - Usuario administrador, mostrando todas las pólizas activas');
+      if (polizas && polizas.length > 0) {
+        const vehiculos = polizas
+          .filter(poliza => poliza.estado === 'Activa')
+          .map(poliza => ({
+            id: poliza.id || poliza.numeroPoliza,
+            marca: poliza.marca || poliza.vehiculo?.split(' ')[0] || 'N/A',
+            modelo: poliza.modelo || poliza.vehiculo?.split(' ')[1] || 'N/A',
+            año: poliza.año || poliza.vehiculo?.split(' ')[2] || 'N/A',
+            placa: poliza.placa || 'N/A',
+            polizaId: poliza.numeroPoliza || poliza.id,
+            vehiculoCompleto: poliza.vehiculo,
+            titular: poliza.titular || poliza.clienteName
+          }));
+        setVehiculosAsegurados(vehiculos);
+      }
+    } else {
+      console.log('   - Usuario sin permisos de cliente o usuario no identificado');
+      setVehiculosAsegurados([]);
     }
   }, [polizas, permissions]);
 
@@ -82,7 +138,7 @@ const RevisarAccidentes = ({ permissions, polizas }) => {
   const filteredAccidentes = accidentes.filter(accidente => {
     // Si es cliente, solo mostrar sus propios accidentes
     if (permissions?.isCliente) {
-      const currentUser = permissions?.getCurrentUser?.();
+      const currentUser = sessionManager.getCurrentUser();
       if (currentUser && accidente.cliente !== currentUser.name) {
         return false;
       }
@@ -107,7 +163,7 @@ const RevisarAccidentes = ({ permissions, polizas }) => {
 
     const nuevoId = accidentes.length > 0 ? Math.max(...accidentes.map(a => a.id)) + 1 : 1;
     const numeroReporte = `ACC-${String(nuevoId).padStart(3, '0')}`;
-    const currentUser = permissions?.getCurrentUser?.();
+    const currentUser = sessionManager.getCurrentUser();
     
     if (!currentUser) {
       alert('Error: No se pudo identificar al usuario');
@@ -157,6 +213,7 @@ const RevisarAccidentes = ({ permissions, polizas }) => {
       documentos: []
     });
     setActiveTab('lista');
+    alert(`✅ Accidente reportado exitosamente con número: ${numeroReporte}`);
   };
 
   const handleAsignarAjustador = (accidenteId, ajustadorNombre) => {
@@ -215,6 +272,8 @@ const RevisarAccidentes = ({ permissions, polizas }) => {
 
   const handleVehiculoChange = (vehiculoId) => {
     const vehiculo = vehiculosAsegurados.find(v => v.id === vehiculoId);
+    console.log('🚗 Vehículo seleccionado:', vehiculo);
+    
     if (vehiculo) {
       setNuevoAccidente(prev => ({
         ...prev,
@@ -224,6 +283,17 @@ const RevisarAccidentes = ({ permissions, polizas }) => {
         modelo: vehiculo.modelo,
         año: vehiculo.año,
         placa: vehiculo.placa
+      }));
+    } else {
+      // Limpiar campos si no se encontró el vehículo
+      setNuevoAccidente(prev => ({
+        ...prev,
+        vehiculoId: '',
+        polizaId: '',
+        marca: '',
+        modelo: '',
+        año: '',
+        placa: ''
       }));
     }
   };
@@ -238,18 +308,65 @@ const RevisarAccidentes = ({ permissions, polizas }) => {
     }
   };
 
+  // Función para renderizar el formulario de reporte (mejorado)
   const renderReporteForm = () => {
-    if (activeTab !== 'nuevo') return null;
+    if (activeTab !== 'reportar') return null;
 
     if (vehiculosAsegurados.length === 0) {
       return (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-          <div className="text-center">
-            <AlertTriangle className="mx-auto h-12 w-12 text-yellow-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay vehículos asegurados</h3>
-            <p className="text-gray-500">
-              Para reportar un accidente, primero debe tener una póliza activa para su vehículo.
-            </p>
+        <div className="space-y-6">
+          {/* Información adicional para debugging si no hay vehículos */}
+          {permissions?.isCliente && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-start">
+                <AlertTriangle className="w-5 h-5 text-yellow-500 mt-0.5 mr-3 flex-shrink-0" />
+                <div>
+                  <h3 className="text-sm font-medium text-yellow-800 mb-2">
+                    Información de Depuración
+                  </h3>
+                  <div className="text-xs text-yellow-700 space-y-1">
+                    <p>• Total de pólizas recibidas: {polizas?.length || 0}</p>
+                    <p>• Usuario actual: {sessionManager.getCurrentUser()?.name || 'No identificado'}</p>
+                    <p>• ID del usuario: {sessionManager.getCurrentUser()?.id || 'No identificado'}</p>
+                    <p>• Permisos isCliente: {permissions?.isCliente ? 'Sí' : 'No'}</p>
+                    {polizas?.length > 0 && (
+                      <div className="mt-2">
+                        <p className="font-medium">Pólizas disponibles:</p>
+                        {polizas.map((poliza, index) => (
+                          <p key={index} className="ml-2">
+                            - {poliza.numeroPoliza}: {poliza.titular || poliza.clienteName} ({poliza.estado}) - {poliza.vehiculo}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <button 
+                    onClick={() => window.location.reload()} 
+                    className="mt-3 text-xs px-3 py-1 bg-yellow-100 hover:bg-yellow-200 rounded border border-yellow-300 transition-colors"
+                  >
+                    Recargar Página
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+            <div className="text-center">
+              <AlertTriangle className="mx-auto h-12 w-12 text-yellow-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No hay vehículos asegurados</h3>
+              <p className="text-gray-500 mb-4">
+                Para reportar un accidente, primero debe tener una póliza activa para su vehículo.
+              </p>
+              {permissions?.canRequestQuote && (
+                <button
+                  onClick={() => setActiveModule?.('cotizaciones')}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Solicitar Cotización
+                </button>
+              )}
+            </div>
           </div>
         </div>
       );
@@ -262,7 +379,7 @@ const RevisarAccidentes = ({ permissions, polizas }) => {
         {/* Selector de Vehículo */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
-            Seleccione el Vehículo Asegurado
+            Seleccione el Vehículo Asegurado <span className="text-red-500">*</span>
           </label>
           <select
             value={nuevoAccidente.vehiculoId}
@@ -272,10 +389,25 @@ const RevisarAccidentes = ({ permissions, polizas }) => {
             <option value="">Seleccione un vehículo</option>
             {vehiculosAsegurados.map(vehiculo => (
               <option key={vehiculo.id} value={vehiculo.id}>
-                {vehiculo.marca} {vehiculo.modelo} {vehiculo.año} - Placa: {vehiculo.placa}
+                {vehiculo.vehiculoCompleto || `${vehiculo.marca} ${vehiculo.modelo} ${vehiculo.año}`} - Placa: {vehiculo.placa} {vehiculo.titular ? `(${vehiculo.titular})` : ''} - Póliza: {vehiculo.polizaId}
               </option>
             ))}
           </select>
+          {nuevoAccidente.vehiculoId && (
+            <div className="mt-2 p-3 bg-blue-50 rounded-lg">
+              <div className="flex items-center">
+                <Car className="w-5 h-5 text-blue-600 mr-2" />
+                <div>
+                  <p className="text-sm font-medium text-blue-900">
+                    Vehículo seleccionado: {nuevoAccidente.marca} {nuevoAccidente.modelo} {nuevoAccidente.año}
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    Placa: {nuevoAccidente.placa} | Póliza: {nuevoAccidente.polizaId}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {nuevoAccidente.vehiculoId && (
@@ -284,12 +416,13 @@ const RevisarAccidentes = ({ permissions, polizas }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Fecha del Accidente
+                  Fecha del Accidente <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
                   value={nuevoAccidente.fecha}
                   onChange={(e) => setNuevoAccidente(prev => ({...prev, fecha: e.target.value}))}
+                  max={new Date().toISOString().split('T')[0]}
                   className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   required
                 />
@@ -297,7 +430,7 @@ const RevisarAccidentes = ({ permissions, polizas }) => {
 
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Hora del Accidente
+                  Hora del Accidente <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="time"
@@ -310,7 +443,7 @@ const RevisarAccidentes = ({ permissions, polizas }) => {
 
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Ubicación
+                  Ubicación <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -324,7 +457,7 @@ const RevisarAccidentes = ({ permissions, polizas }) => {
 
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Tipo de Accidente
+                  Tipo de Accidente <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={nuevoAccidente.tipoAccidente}
@@ -337,6 +470,9 @@ const RevisarAccidentes = ({ permissions, polizas }) => {
                   <option value="Volcadura">Volcadura</option>
                   <option value="Atropello">Atropello</option>
                   <option value="Choque con objeto fijo">Choque con objeto fijo</option>
+                  <option value="Robo/Hurto">Robo/Hurto</option>
+                  <option value="Incendio">Incendio</option>
+                  <option value="Fenómenos naturales">Fenómenos naturales</option>
                   <option value="Otro">Otro</option>
                 </select>
               </div>
@@ -372,14 +508,29 @@ const RevisarAccidentes = ({ permissions, polizas }) => {
 
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
-                Descripción del Accidente
+                Gravedad del Accidente
+              </label>
+              <select
+                value={nuevoAccidente.gravedad}
+                onChange={(e) => setNuevoAccidente(prev => ({...prev, gravedad: e.target.value}))}
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+              >
+                <option value="Leve">Leve - Solo daños materiales menores</option>
+                <option value="Moderado">Moderado - Daños considerables o heridos leves</option>
+                <option value="Grave">Grave - Daños severos o heridos graves</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Descripción del Accidente <span className="text-red-500">*</span>
               </label>
               <textarea
                 value={nuevoAccidente.descripcionDaños}
                 onChange={(e) => setNuevoAccidente(prev => ({...prev, descripcionDaños: e.target.value}))}
                 rows={4}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                placeholder="Describa detalladamente lo ocurrido, incluyendo los daños al vehículo y/o a terceros"
+                placeholder="Describa detalladamente lo ocurrido, incluyendo los daños al vehículo y/o a terceros, condiciones climáticas, estado de la vía, etc."
                 required
               />
             </div>
@@ -405,7 +556,8 @@ const RevisarAccidentes = ({ permissions, polizas }) => {
                         />
                       </label>
                     </div>
-                    <p className="text-xs text-gray-500">PNG, JPG hasta 10MB</p>
+                    <p className="text-xs text-gray-500">PNG, JPG hasta 10MB cada una</p>
+                    <p className="text-xs text-gray-400">Se recomiendan fotos del vehículo, lugar del accidente y documentos</p>
                   </div>
                 </div>
                 {nuevoAccidente.fotos.length > 0 && (
@@ -435,6 +587,7 @@ const RevisarAccidentes = ({ permissions, polizas }) => {
                       </label>
                     </div>
                     <p className="text-xs text-gray-500">PDF, DOC, DOCX hasta 10MB</p>
+                    <p className="text-xs text-gray-400">Parte policial, cotizaciones de reparación, etc.</p>
                   </div>
                 </div>
                 {nuevoAccidente.documentos.length > 0 && (
@@ -737,106 +890,8 @@ const RevisarAccidentes = ({ permissions, polizas }) => {
         </div>
       )}
 
-      {activeTab === 'reportar' && permissions?.canReportAccidentes && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Reportar Nuevo Accidente</h3>
-          <form onSubmit={(e) => { e.preventDefault(); handleReportarAccidente(); }} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Vehículo</label>
-                <input
-                  type="text"
-                  value={nuevoAccidente.vehiculo}
-                  onChange={(e) => setNuevoAccidente(prev => ({...prev, vehiculo: e.target.value}))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ej: Toyota Corolla 2020"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Placa</label>
-                <input
-                  type="text"
-                  value={nuevoAccidente.placa}
-                  onChange={(e) => setNuevoAccidente(prev => ({...prev, placa: e.target.value}))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ej: ABC-123"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
-                <input
-                  type="date"
-                  value={nuevoAccidente.fecha}
-                  onChange={(e) => setNuevoAccidente(prev => ({...prev, fecha: e.target.value}))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Hora</label>
-                <input
-                  type="time"
-                  value={nuevoAccidente.hora}
-                  onChange={(e) => setNuevoAccidente(prev => ({...prev, hora: e.target.value}))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ubicación</label>
-                <input
-                  type="text"
-                  value={nuevoAccidente.ubicacion}
-                  onChange={(e) => setNuevoAccidente(prev => ({...prev, ubicacion: e.target.value}))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ej: Av. Principal con Calle 5"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Gravedad</label>
-                <select
-                  value={nuevoAccidente.gravedad}
-                  onChange={(e) => setNuevoAccidente(prev => ({...prev, gravedad: e.target.value}))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="Leve">Leve</option>
-                  <option value="Moderado">Moderado</option>
-                  <option value="Grave">Grave</option>
-                </select>
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción del Accidente</label>
-                <textarea
-                  value={nuevoAccidente.descripcion}
-                  onChange={(e) => setNuevoAccidente(prev => ({...prev, descripcion: e.target.value}))}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Describa detalladamente lo ocurrido..."
-                  required
-                />
-              </div>
-            </div>
-            <div className="flex justify-end space-x-3">
-              <button
-                type="button"
-                onClick={() => setActiveTab('lista')}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Reportar Accidente
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+      {/* Llamar al formulario mejorado */}
+      {renderReporteForm()}
 
       {/* Modal de detalles */}
       {mostrarModal && accidenteSeleccionado && (

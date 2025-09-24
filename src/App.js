@@ -54,7 +54,7 @@ const SistemaSeguroVehicular = () => {
     }
   };
 
-  // Verificar sesión al cargar la app
+  // Verificar sesión al cargar la app y cargar datos del localStorage
   useEffect(() => {
     const savedSession = sessionManager.getSession();
     if (savedSession) {
@@ -63,6 +63,16 @@ const SistemaSeguroVehicular = () => {
       setShowLandingPage(false); // Si hay sesión activa, ir directamente a la app
       console.log('🔄 Sesión restaurada:', savedSession.user);
     }
+
+    // Cargar pólizas del localStorage al inicializar la app
+    const polizasGuardadas = JSON.parse(localStorage.getItem('polizas') || '[]');
+    setPolizas(polizasGuardadas);
+    console.log('🔄 Pólizas cargadas:', polizasGuardadas);
+
+    // Cargar clientes del localStorage al inicializar la app
+    const clientesGuardados = JSON.parse(localStorage.getItem('users') || '[]').filter(user => user.role === 'Cliente');
+    setClientes(clientesGuardados);
+    console.log('🔄 Clientes cargados:', clientesGuardados);
   }, []);
 
   // Funciones de autenticación
@@ -204,7 +214,7 @@ const SistemaSeguroVehicular = () => {
       case 'fraudes':
         return <DeteccionFraudes permissions={permissions} />;
       case 'accidentes':
-        return <RevisarAccidentes permissions={permissions} polizas={polizas} />;
+        return <RevisarAccidentes permissions={permissions} polizas={polizas} setActiveModule={handleModuleChange} />;
       case 'reportes':
         return <Reportes permissions={permissions} />;
       default:
