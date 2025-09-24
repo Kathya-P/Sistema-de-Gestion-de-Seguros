@@ -45,11 +45,10 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
     nombreCompleto: '',
     telefono: '',
     email: '',
-    // Nuevos campos para cálculo más preciso
+    // Campos para cálculo más preciso (sin ubicación)
     usoPrincipal: 'personal',
     kilometrosAnuales: 'menos-10000',
-    lugarEstacionamiento: 'garaje-privado',
-    ubicacionUso: ''
+    lugarEstacionamiento: 'garaje-privado'
   });
 
   const handleInputChange = (e) => {
@@ -133,7 +132,7 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
     else if (deducible >= 1000) prima *= 0.9;
     else if (deducible >= 750) prima *= 0.95;
 
-    // Nuevos ajustes por factores de riesgo adicionales
+    // Ajustes por factores de riesgo (sin ubicación)
     
     // Ajuste por uso principal del vehículo
     switch (datos.usoPrincipal) {
@@ -192,25 +191,6 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
         break;
     }
 
-    // Ajuste por ubicación de uso (zonas de riesgo)
-    const ubicacion = datos.ubicacionUso?.toLowerCase();
-    if (ubicacion) {
-      // Zonas de alto riesgo en El Salvador
-      const zonasAltoRiesgo = ['soyapango', 'mejicanos', 'ciudad delgado', 'ilopango'];
-      const zonasRiesgoMedio = ['san salvador', 'santa tecla', 'san miguel', 'santa ana'];
-      const zonasBajoRiesgo = ['antiguo cuscatlán', 'la libertad', 'escalón', 'colonia san benito'];
-      
-      if (zonasAltoRiesgo.some(zona => ubicacion.includes(zona))) {
-        prima *= 1.3; // Alto riesgo
-      } else if (zonasRiesgoMedio.some(zona => ubicacion.includes(zona))) {
-        prima *= 1.1; // Riesgo medio
-      } else if (zonasBajoRiesgo.some(zona => ubicacion.includes(zona))) {
-        prima *= 0.9; // Bajo riesgo
-      } else {
-        prima *= 1.0; // Riesgo estándar para ubicaciones no especificadas
-      }
-    }
-
     return Math.round(prima);
   };
 
@@ -220,7 +200,7 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
     // Validar campos requeridos
     if (!formData.nombreCompleto || !formData.telefono || !formData.marca || 
         !formData.modelo || !formData.año || !formData.placa || !formData.valorVehiculo || 
-        !formData.edad || !formData.añosLicencia || !formData.ubicacionUso) {
+        !formData.edad || !formData.añosLicencia) {
       alert('Por favor complete todos los campos requeridos');
       return;
     }
@@ -248,11 +228,10 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
       cobertura: getCoberturaTexto(formData.tipoSeguro),
       primaMensual: primaMensual.toLocaleString(),
       primaAnual: primaAnual.toLocaleString(),
-      // Nuevos campos de evaluación de riesgo
+      // Campos de evaluación de riesgo (sin ubicación)
       usoPrincipal: formData.usoPrincipal,
       kilometrosAnuales: formData.kilometrosAnuales,
       lugarEstacionamiento: formData.lugarEstacionamiento,
-      ubicacionUso: formData.ubicacionUso,
       estado: 'pendiente',
       fechaSolicitud: new Date().toISOString().split('T')[0],
       clienteId: currentUser?.id || `CLI-${Date.now()}`,
@@ -281,11 +260,10 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
       nombreCompleto: '',
       telefono: '',
       email: '',
-      // Reset de nuevos campos
+      // Reset de campos (sin ubicación)
       usoPrincipal: 'personal',
       kilometrosAnuales: 'menos-10000',
-      lugarEstacionamiento: 'garaje-privado',
-      ubicacionUso: ''
+      lugarEstacionamiento: 'garaje-privado'
     });
 
     setActiveTab('lista');
@@ -867,90 +845,73 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
               </div>
             </div>
 
-            {/* Factores de Riesgo Adicionales */}
+            {/* Factores de Riesgo Adicionales (sin ubicación) */}
             <div className="bg-gray-50 p-4 rounded-lg">
               <h4 className="text-lg font-semibold text-gray-900 mb-4">Factores de Riesgo Adicionales 
                 <span className="text-sm font-normal text-gray-600 ml-2">(Para un cálculo más preciso)</span>
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Uso Principal del Vehículo */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Uso Principal del Vehículo *
-                    </label>
-                    <select
-                      name="usoPrincipal"
-                      value={formData.usoPrincipal}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    >
-                      <option value="personal">Personal/Familiar</option>
-                      <option value="trabajo">Trabajo (general)</option>
-                      <option value="trabajo-transporte-publico">Trabajo - Transporte Público</option>
-                      <option value="trabajo-delivery">Trabajo - Delivery/Reparto</option>
-                      <option value="comercial">Comercial</option>
-                    </select>
-                    <p className="text-sm text-gray-500 mt-1">El uso comercial o de trabajo aumenta el riesgo</p>
-                  </div>
+                {/* Uso Principal del Vehículo */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Uso Principal del Vehículo *
+                  </label>
+                  <select
+                    name="usoPrincipal"
+                    value={formData.usoPrincipal}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="personal">Personal/Familiar</option>
+                    <option value="trabajo">Trabajo (general)</option>
+                    <option value="trabajo-transporte-publico">Trabajo - Transporte Público</option>
+                    <option value="trabajo-delivery">Trabajo - Delivery/Reparto</option>
+                    <option value="comercial">Comercial</option>
+                  </select>
+                  <p className="text-sm text-gray-500 mt-1">El uso comercial o de trabajo aumenta el riesgo</p>
+                </div>
 
-                  {/* Kilómetros Anuales */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Kilómetros Anuales Estimados *
-                    </label>
-                    <select
-                      name="kilometrosAnuales"
-                      value={formData.kilometrosAnuales}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    >
-                      <option value="menos-10000">Menos de 10,000 km</option>
-                      <option value="10000-20000">10,000 - 20,000 km</option>
-                      <option value="mas-20000">Más de 20,000 km</option>
-                    </select>
-                    <p className="text-sm text-gray-500 mt-1">Mayor kilometraje = mayor exposición a riesgos</p>
-                  </div>
+                {/* Kilómetros Anuales */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Kilómetros Anuales Estimados *
+                  </label>
+                  <select
+                    name="kilometrosAnuales"
+                    value={formData.kilometrosAnuales}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="menos-10000">Menos de 10,000 km</option>
+                    <option value="10000-20000">10,000 - 20,000 km</option>
+                    <option value="mas-20000">Más de 20,000 km</option>
+                  </select>
+                  <p className="text-sm text-gray-500 mt-1">Mayor kilometraje = mayor exposición a riesgos</p>
+                </div>
 
-                  {/* Lugar de Estacionamiento */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ¿Dónde se Estaciona Habitualmente? *
-                    </label>
-                    <select
-                      name="lugarEstacionamiento"
-                      value={formData.lugarEstacionamiento}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    >
-                      <option value="garaje-privado">Garaje privado</option>
-                      <option value="estacionamiento-techado">Estacionamiento público techado</option>
-                      <option value="calle">Calle</option>
-                      <option value="estacionamiento-empresarial">Estacionamiento empresarial</option>
-                    </select>
-                    <p className="text-sm text-gray-500 mt-1">Estacionamientos seguros reducen el riesgo de robo y daños</p>
-                  </div>
-
-                  {/* Ubicación de Uso */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Ubicación Principal de Uso *
-                    </label>
-                    <input
-                      type="text"
-                      name="ubicacionUso"
-                      value={formData.ubicacionUso}
-                      onChange={handleInputChange}
-                      placeholder="Ej: San Salvador, Santa Tecla, Antiguo Cuscatlán"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                    <p className="text-sm text-gray-500 mt-1">Departamento/Ciudad donde circula más frecuentemente</p>
-                  </div>
+                {/* Lugar de Estacionamiento */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    ¿Dónde se Estaciona Habitualmente? *
+                  </label>
+                  <select
+                    name="lugarEstacionamiento"
+                    value={formData.lugarEstacionamiento}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="garaje-privado">Garaje privado</option>
+                    <option value="estacionamiento-techado">Estacionamiento público techado</option>
+                    <option value="calle">Calle</option>
+                    <option value="estacionamiento-empresarial">Estacionamiento empresarial</option>
+                  </select>
+                  <p className="text-sm text-gray-500 mt-1">Estacionamientos seguros reducen el riesgo de robo y daños</p>
                 </div>
               </div>
+            </div>
 
             <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
               <button
