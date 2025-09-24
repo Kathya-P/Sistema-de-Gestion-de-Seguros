@@ -55,7 +55,7 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
   };
 
   const calcularPrima = (datos) => {
-    let prima = parseInt(datos.valorVehiculo) * 0.015; // Base 1.5% del valor (más realista para dólares)
+    let prima = parseInt(datos.valorVehiculo) * 0.015; // Base 1.5% del valor
 
     // Ajuste por tipo de cobertura
     switch (datos.tipoSeguro) {
