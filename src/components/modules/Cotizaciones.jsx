@@ -32,19 +32,25 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
   }, [activeTab]);
 
   const [formData, setFormData] = useState({
-    tipoSeguro: 'todo-riesgo',
+    tipoSeguro: 'responsabilidad-civil',
     marca: '',
     modelo: '',
     año: '',
     placa: '',
     valorVehiculo: '',
-    deducible: '750',
+    deducible: '0', // N/A para responsabilidad civil por defecto
     edad: '',
     historialSiniestros: 'sin-siniestros',
     añosLicencia: '',
     nombreCompleto: '',
     telefono: '',
     email: '',
+    // Nuevos campos de información personal
+    dui: '',
+    fechaNacimiento: '',
+    direccion: '',
+    estadoCivil: '',
+    ocupacion: '',
     // Campos para cálculo más preciso (sin ubicación)
     usoPrincipal: 'personal',
     kilometrosAnuales: 'menos-10000',
@@ -52,155 +58,167 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
   });
 
   const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    
+    // Auto-ajustar deducible según tipo de seguro
+    let newFormData = { ...formData, [name]: value };
+    
+    if (name === 'tipoSeguro') {
+      switch (value) {
+        case 'responsabilidad-civil':
+          newFormData.deducible = '0';
+          break;
+        case 'basico':
+          newFormData.deducible = '750';
+          break;
+        case 'todo-riesgo':
+          newFormData.deducible = '1000';
+          break;
+        case 'premium':
+          newFormData.deducible = '500';
+          break;
+        default:
+          break;
+      }
+    }
+    
+    setFormData(newFormData);
   };
 
   const calcularPrima = (datos) => {
-    let prima = parseInt(datos.valorVehiculo) * 0.015; // Base 1.5% del valor
+    const valorVehiculo = parseInt(datos.valorVehiculo);
+    let prima = 0;
 
-    // Ajuste por tipo de cobertura
+    // Cálculo simplificado según tabla
     switch (datos.tipoSeguro) {
-      case 'todo-riesgo':
-        prima *= 1.0;
-        break;
-      case 'premium':
-        prima *= 1.3;
-        break;
       case 'responsabilidad-civil':
-        prima *= 0.4;
+        // Valor × 3% + $100
+        prima = (valorVehiculo * 0.03) + 100;
         break;
+
       case 'basico':
-        prima *= 0.6;
+        // RC × 1.8
+        const primaRC = (valorVehiculo * 0.03) + 100;
+        prima = primaRC * 1.8;
         break;
+
+      case 'todo-riesgo':
+        // Valor × 7% × Factores de Riesgo
+        prima = valorVehiculo * 0.07;
+        
+        // Aplicar factores de riesgo
+        prima = prima * calcularFactoresRiesgo(datos);
+        break;
+
+      case 'premium':
+        // Todo Riesgo × 1.25
+        const primaTodoRiesgo = valorVehiculo * 0.07;
+        prima = (primaTodoRiesgo * calcularFactoresRiesgo(datos)) * 1.25;
+        break;
+
       default:
-        prima *= 1.0;
-        break;
-    }
-
-    // Ajuste por edad
-    const edad = parseInt(datos.edad);
-    if (edad < 25) prima *= 1.4;
-    else if (edad > 65) prima *= 1.2;
-
-    // Ajuste por experiencia
-    switch (datos.añosLicencia) {
-      case 'menos-1':
-        prima *= 1.5;
-        break;
-      case '1-3':
-        prima *= 1.2;
-        break;
-      case '4-7':
-        prima *= 1.0;
-        break;
-      case '8-15':
-        prima *= 0.9;
-        break;
-      case 'mas-15':
-        prima *= 0.8;
-        break;
-      default:
-        prima *= 1.0;
-        break;
-    }
-
-    // Ajuste por historial
-    switch (datos.historialSiniestros) {
-      case 'sin-siniestros':
-        prima *= 0.9;
-        break;
-      case '1-siniestro':
-        prima *= 1.2;
-        break;
-      case '2-siniestros':
-        prima *= 1.5;
-        break;
-      case 'mas-siniestros':
-        prima *= 2.0;
-        break;
-      default:
-        prima *= 1.0;
-        break;
-    }
-
-    // Ajuste por deducible
-    const deducible = parseInt(datos.deducible);
-    if (deducible >= 1500) prima *= 0.85;
-    else if (deducible >= 1000) prima *= 0.9;
-    else if (deducible >= 750) prima *= 0.95;
-
-    // Ajustes por factores de riesgo (sin ubicación)
-    
-    // Ajuste por uso principal del vehículo
-    switch (datos.usoPrincipal) {
-      case 'personal':
-        prima *= 1.0; // Base
-        break;
-      case 'trabajo':
-        prima *= 1.15; // Mayor riesgo por uso frecuente
-        break;
-      case 'trabajo-transporte-publico':
-        prima *= 1.4; // Alto riesgo
-        break;
-      case 'trabajo-delivery':
-        prima *= 1.3; // Alto riesgo
-        break;
-      case 'comercial':
-        prima *= 1.25; // Riesgo comercial
-        break;
-      default:
-        prima *= 1.0;
-        break;
-    }
-
-    // Ajuste por kilómetros anuales
-    switch (datos.kilometrosAnuales) {
-      case 'menos-10000':
-        prima *= 0.95; // Menos exposición
-        break;
-      case '10000-20000':
-        prima *= 1.0; // Base
-        break;
-      case 'mas-20000':
-        prima *= 1.2; // Mayor exposición
-        break;
-      default:
-        prima *= 1.0;
-        break;
-    }
-
-    // Ajuste por lugar de estacionamiento
-    switch (datos.lugarEstacionamiento) {
-      case 'garaje-privado':
-        prima *= 0.9; // Más seguro
-        break;
-      case 'estacionamiento-techado':
-        prima *= 0.95; // Relativamente seguro
-        break;
-      case 'calle':
-        prima *= 1.15; // Mayor riesgo de robo/daños
-        break;
-      case 'estacionamiento-empresarial':
-        prima *= 0.92; // Seguro con vigilancia
-        break;
-      default:
-        prima *= 1.0;
+        prima = valorVehiculo * 0.05;
         break;
     }
 
     return Math.round(prima);
   };
 
+  const calcularFactoresRiesgo = (datos) => {
+    let factor = 1.0;
+
+    // Factor por edad
+    const edad = parseInt(datos.edad);
+    if (edad >= 18 && edad <= 24) {
+      factor *= 1.3; // Jóvenes
+    } else if (edad >= 25 && edad <= 55) {
+      factor *= 1.0; // Base
+    } else if (edad >= 65) {
+      factor *= 1.1; // Adultos mayores
+    }
+
+    // Factor por experiencia
+    switch (datos.añosLicencia) {
+      case 'menos-1':
+      case '1-3':
+        factor *= 1.2; // Poca experiencia
+        break;
+      case '4-7':
+        factor *= 1.0; // Base
+        break;
+      case '8-15':
+      case 'mas-15':
+        factor *= 0.9; // Mucha experiencia
+        break;
+    }
+
+    // Factor por historial
+    switch (datos.historialSiniestros) {
+      case 'sin-siniestros':
+        factor *= 0.9;
+        break;
+      case '1-siniestro':
+        factor *= 1.1;
+        break;
+      case '2-siniestros':
+      case 'mas-siniestros':
+        factor *= 1.3;
+        break;
+    }
+
+    // Factor por uso
+    switch (datos.usoPrincipal) {
+      case 'personal':
+        factor *= 1.0;
+        break;
+      case 'trabajo':
+      case 'trabajo-delivery':
+      case 'trabajo-transporte-publico':
+        factor *= 1.2;
+        break;
+      case 'comercial':
+        factor *= 1.4;
+        break;
+    }
+
+    // Factor por estacionamiento
+    switch (datos.lugarEstacionamiento) {
+      case 'garaje-privado':
+        factor *= 0.9;
+        break;
+      case 'estacionamiento-techado':
+      case 'estacionamiento-empresarial':
+        factor *= 0.95;
+        break;
+      case 'calle':
+        factor *= 1.1;
+        break;
+    }
+
+    // Factor por kilometraje
+    switch (datos.kilometrosAnuales) {
+      case 'menos-10000':
+        factor *= 0.95;
+        break;
+      case '10000-20000':
+        factor *= 1.0;
+        break;
+      case 'mas-20000':
+        factor *= 1.15;
+        break;
+    }
+
+    return factor;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
     // Validar campos requeridos
-    if (!formData.nombreCompleto || !formData.telefono || !formData.marca || 
-        !formData.modelo || !formData.año || !formData.placa || !formData.valorVehiculo || 
-        !formData.edad || !formData.añosLicencia) {
+    if (!formData.nombreCompleto || !formData.telefono || !formData.dui || 
+        !formData.fechaNacimiento || !formData.direccion || !formData.estadoCivil || 
+        !formData.ocupacion || !formData.marca || !formData.modelo || !formData.año || 
+        !formData.placa || !formData.valorVehiculo || !formData.edad || !formData.añosLicencia) {
       alert('Por favor complete todos los campos requeridos');
       return;
     }
@@ -214,6 +232,11 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
     const nuevaSolicitud = {
       id: codigoSolicitud,
       nombreCompleto: formData.nombreCompleto,
+      dui: formData.dui,
+      fechaNacimiento: formData.fechaNacimiento,
+      direccion: formData.direccion,
+      estadoCivil: formData.estadoCivil,
+      ocupacion: formData.ocupacion,
       telefono: formData.telefono,
       email: formData.email,
       marca: formData.marca,
@@ -247,17 +270,22 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
     alert(`✅ Solicitud enviada exitosamente!\n\nPrima mensual estimada: $${primaMensual.toLocaleString()}\nPrima anual: $${primaAnual.toLocaleString()}\n\nRecibirá una respuesta en las próximas 24 horas.`);
     
     setFormData({
-      tipoSeguro: 'todo-riesgo',
+      tipoSeguro: 'responsabilidad-civil',
       marca: '',
       modelo: '',
       año: '',
       placa: '',
       valorVehiculo: '',
-      deducible: '750',
+      deducible: '0', // N/A para responsabilidad civil por defecto
       edad: '',
       historialSiniestros: 'sin-siniestros',
       añosLicencia: '',
       nombreCompleto: '',
+      dui: '',
+      fechaNacimiento: '',
+      direccion: '',
+      estadoCivil: '',
+      ocupacion: '',
       telefono: '',
       email: '',
       // Reset de campos (sin ubicación)
@@ -612,6 +640,36 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                    DUI *
+                  </label>
+                  <input
+                    type="text"
+                    name="dui"
+                    value={formData.dui}
+                    onChange={handleInputChange}
+                    placeholder="00000000-0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    pattern="[0-9]{8}-[0-9]"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Fecha de Nacimiento *
+                  </label>
+                  <input
+                    type="date"
+                    name="fechaNacimiento"
+                    value={formData.fechaNacimiento}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Teléfono *
                   </label>
                   <input
@@ -619,7 +677,42 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
                     name="telefono"
                     value={formData.telefono}
                     onChange={handleInputChange}
-                    placeholder="Ej: 8888-8888"
+                    placeholder="0000-0000 o 0000-0000"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Estado Civil *
+                  </label>
+                  <select
+                    name="estadoCivil"
+                    value={formData.estadoCivil}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">Seleccione estado civil</option>
+                    <option value="soltero">Soltero(a)</option>
+                    <option value="casado">Casado(a)</option>
+                    <option value="divorciado">Divorciado(a)</option>
+                    <option value="viudo">Viudo(a)</option>
+                    <option value="union-libre">Unión Libre</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Ocupación/Profesión *
+                  </label>
+                  <input
+                    type="text"
+                    name="ocupacion"
+                    value={formData.ocupacion}
+                    onChange={handleInputChange}
+                    placeholder="Ej: Contador, Estudiante, Comerciante"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
@@ -627,7 +720,7 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Correo Electrónico (Opcional)
+                    Correo Electrónico
                   </label>
                   <input
                     type="email"
@@ -636,6 +729,21 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
                     onChange={handleInputChange}
                     placeholder="correo@ejemplo.com"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Dirección Residencial *
+                  </label>
+                  <textarea
+                    name="direccion"
+                    value={formData.direccion}
+                    onChange={handleInputChange}
+                    placeholder="Dirección completa incluyendo municipio y departamento"
+                    rows={2}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    required
                   />
                 </div>
               </div>
@@ -655,11 +763,49 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="todo-riesgo">Todo Riesgo</option>
-                    <option value="responsabilidad-civil">Responsabilidad Civil</option>
-                    <option value="basico">Seguro Básico</option>
-                    <option value="premium">Todo Riesgo Premium</option>
+                    <option value="responsabilidad-civil">Responsabilidad Civil - Solo daños a terceros (Más económico)</option>
+                    <option value="basico">Seguro Básico - Terceros + Robo e Incendio Total</option>
+                    <option value="todo-riesgo">Todo Riesgo - Cobertura Completa</option>
+                    <option value="premium">Todo Riesgo Premium - Cobertura Completa + Extras</option>
                   </select>
+                  
+                  {/* Tabla resumen de coberturas y cálculos */}
+                  <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <h5 className="text-sm font-semibold text-blue-900 mb-2">📋 Resumen de Cobertura Seleccionada</h5>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b border-blue-200">
+                            <th className="text-left py-1 text-blue-800">Tipo</th>
+                            <th className="text-left py-1 text-blue-800">Deducible</th>
+                            <th className="text-left py-1 text-blue-800">Cálculo Prima</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr className={formData.tipoSeguro === 'responsabilidad-civil' ? 'bg-blue-100 font-medium' : ''}>
+                            <td className="py-1">RC</td>
+                            <td className="py-1">N/A</td>
+                            <td className="py-1">Valor × 3% + $100</td>
+                          </tr>
+                          <tr className={formData.tipoSeguro === 'basico' ? 'bg-blue-100 font-medium' : ''}>
+                            <td className="py-1">Básico</td>
+                            <td className="py-1">$750</td>
+                            <td className="py-1">RC × 1.8</td>
+                          </tr>
+                          <tr className={formData.tipoSeguro === 'todo-riesgo' ? 'bg-blue-100 font-medium' : ''}>
+                            <td className="py-1">Todo Riesgo</td>
+                            <td className="py-1">$1,000</td>
+                            <td className="py-1">Valor × 7% × Factores</td>
+                          </tr>
+                          <tr className={formData.tipoSeguro === 'premium' ? 'bg-blue-100 font-medium' : ''}>
+                            <td className="py-1">Premium</td>
+                            <td className="py-1">$500</td>
+                            <td className="py-1">Todo Riesgo × 1.25</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
@@ -767,19 +913,34 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Deducible Preferido
+                    Deducible
                   </label>
                   <select
                     name="deducible"
                     value={formData.deducible}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={formData.tipoSeguro === 'responsabilidad-civil'}
                   >
-                    <option value="500">$500 (Prima más alta)</option>
-                    <option value="750">$750 (Recomendado)</option>
-                    <option value="1000">$1,000</option>
-                    <option value="1500">$1,500 (Prima más baja)</option>
+                    {formData.tipoSeguro === 'responsabilidad-civil' && (
+                      <option value="0">N/A - No aplica para Responsabilidad Civil</option>
+                    )}
+                    {formData.tipoSeguro === 'basico' && (
+                      <option value="750">$750 (Fijo para Seguro Básico)</option>
+                    )}
+                    {formData.tipoSeguro === 'todo-riesgo' && (
+                      <option value="1000">$1,000 (Fijo para Todo Riesgo)</option>
+                    )}
+                    {formData.tipoSeguro === 'premium' && (
+                      <option value="500">$500 (Fijo para Todo Riesgo Premium)</option>
+                    )}
                   </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formData.tipoSeguro === 'responsabilidad-civil' && 'Los seguros de responsabilidad civil no tienen deducible'}
+                    {formData.tipoSeguro === 'basico' && 'Deducible estándar para cobertura básica'}
+                    {formData.tipoSeguro === 'todo-riesgo' && 'Deducible balanceado para cobertura completa'}
+                    {formData.tipoSeguro === 'premium' && 'Deducible más bajo para máxima comodidad'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -980,11 +1141,31 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
                       <p className="font-medium">{solicitudSeleccionada.nombreCompleto}</p>
                     </div>
                     <div>
+                      <p className="text-sm text-gray-500">DUI</p>
+                      <p className="font-medium">{solicitudSeleccionada.dui || 'No proporcionado'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Fecha de Nacimiento</p>
+                      <p className="font-medium">{solicitudSeleccionada.fechaNacimiento || 'No proporcionada'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Estado Civil</p>
+                      <p className="font-medium">{solicitudSeleccionada.estadoCivil || 'No especificado'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Ocupación</p>
+                      <p className="font-medium">{solicitudSeleccionada.ocupacion || 'No especificada'}</p>
+                    </div>
+                    <div>
                       <p className="text-sm text-gray-500">Teléfono</p>
                       <p className="font-medium flex items-center">
                         <Phone className="w-4 h-4 mr-1" />
                         {solicitudSeleccionada.telefono}
                       </p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <p className="text-sm text-gray-500">Dirección</p>
+                      <p className="font-medium">{solicitudSeleccionada.direccion || 'No proporcionada'}</p>
                     </div>
                     {solicitudSeleccionada.email && (
                       <div className="md:col-span-2">
