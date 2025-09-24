@@ -7,6 +7,7 @@ const AuthComponent = ({ onLogin, onRegister }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
   
   // Datos para login
   const [loginData, setLoginData] = useState({ username: '', password: '' });
@@ -76,6 +77,36 @@ const AuthComponent = ({ onLogin, onRegister }) => {
       }
       setIsLoading(false);
     }, 1000);
+  };
+
+  // Función para obtener la dirección por geolocalización
+  const handleGetLocation = () => {
+    setIsGettingLocation(true);
+    setError('');
+    if (!navigator.geolocation) {
+      setError('La geolocalización no está soportada en este navegador');
+      setIsGettingLocation(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        try {
+          // OpenStreetMap Nominatim reverse geocoding
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+          const data = await res.json();
+          const address = data.display_name || `${latitude}, ${longitude}`;
+          setRegisterData(prev => ({ ...prev, address }));
+        } catch {
+          setError('No se pudo obtener la dirección');
+        }
+        setIsGettingLocation(false);
+      },
+      (err) => {
+        setError('No se pudo obtener la ubicación');
+        setIsGettingLocation(false);
+      }
+    );
   };
 
   return (
@@ -237,14 +268,25 @@ const AuthComponent = ({ onLogin, onRegister }) => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Dirección
               </label>
-              <input
-                type="text"
-                value={registerData.address}
-                onChange={(e) => setRegisterData({...registerData, address: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ej: San José, Escazú, 200m sur del parque"
-                required
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={registerData.address}
+                  onChange={(e) => setRegisterData({...registerData, address: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Ej: Tu dirección actual"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={handleGetLocation}
+                  disabled={isGettingLocation}
+                  className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  style={{minWidth: '120px'}}
+                >
+                  {isGettingLocation ? 'Buscando...' : 'Usar mi ubicación'}
+                </button>
+              </div>
             </div>
 
             <div>
