@@ -686,8 +686,8 @@ const Cotizaciones = ({ resultadoCotizacion, handleCalcular, permissions }) => {
                     value={formData.valorVehiculo}
                     onChange={handleInputChange}
                     placeholder="Ej: 25000"
-                    min="5000"
-                    max="150000"
+                    min="2500"
+                    max="1000000"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />

@@ -16,7 +16,11 @@ import {
   Trash2,
   PauseCircle,
   RefreshCw,
-  Download
+  Download,
+  User,
+  Shield,
+  Calendar,
+  AlertTriangle
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 
@@ -26,6 +30,8 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
   const [activeTab, setActiveTab] = useState('polizas');
   const [solicitudesPendientes, setSolicitudesPendientes] = useState([]);
   const [polizasReales, setPolizasReales] = useState([]); // Solo pólizas reales del localStorage
+  const [polizaSeleccionada, setPolizaSeleccionada] = useState(null);
+  const [mostrarModalDetalle, setMostrarModalDetalle] = useState(false);
   
   // Obtener usuario actual
   const currentUser = permissions?.currentUser || JSON.parse(localStorage.getItem('seguros_session_data') || '{}').user;
@@ -131,7 +137,53 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
 
   // Funciones de acción para administradores
   const verDetallePoliza = (poliza) => {
-    alert(`📋 Detalles de Póliza ${poliza.numeroPoliza}\n\nTitular: ${poliza.titular}\nVehículo: ${poliza.vehiculo}\nPlaca: ${poliza.placa}\nCobertura: ${poliza.cobertura}\nPrima: $${poliza.prima}\nEstado: ${poliza.estado}\nVencimiento: ${poliza.vencimiento}`);
+    // Buscar la cotización original para obtener datos adicionales
+    const cotizaciones = JSON.parse(localStorage.getItem('cotizaciones') || '[]');
+    const cotizacionOriginal = cotizaciones.find(cot => cot.id === poliza.solicitudId);
+    
+    console.log('Póliza original:', poliza);
+    console.log('Cotización encontrada:', cotizacionOriginal);
+    console.log('Todas las cotizaciones:', cotizaciones);
+    console.log('Buscando solicitudId:', poliza.solicitudId);
+    
+    if (cotizacionOriginal) {
+      console.log('Datos específicos de la cotización:');
+      console.log('- edadConductor:', cotizacionOriginal.edadConductor);
+      console.log('- edad:', cotizacionOriginal.edad);
+      console.log('- valorVehiculo:', cotizacionOriginal.valorVehiculo);
+      console.log('- añosLicencia:', cotizacionOriginal.añosLicencia);
+      console.log('- email:', cotizacionOriginal.email);
+      console.log('- historialSiniestros:', cotizacionOriginal.historialSiniestros);
+    } else {
+      console.log('❌ No se encontró cotización para solicitudId:', poliza.solicitudId);
+    }
+    
+    // Crear mapeo de texto para años de licencia
+    const añosLicenciaTexto = {
+      'menos-1': 'Menos de 1 año',
+      '1-3': '1-3 años',
+      '4-7': '4-7 años', 
+      '8-15': '8-15 años',
+      'mas-15': 'Más de 15 años'
+    };
+    
+    // Crear objeto con todos los datos disponibles
+    const polizaCompleta = {
+      ...poliza,
+      valorVehiculo: cotizacionOriginal?.valorVehiculo || 'No especificado',
+      valorVehiculoNumerico: cotizacionOriginal?.valorVehiculo ? 
+        parseInt(cotizacionOriginal.valorVehiculo.toString().replace(/,/g, '')) : 0, // Remover comas si existen
+      email: cotizacionOriginal?.email || 'No especificado',
+      edad: cotizacionOriginal?.edadConductor || cotizacionOriginal?.edad || 'No especificado', // Buscar tanto edadConductor como edad
+      añosLicencia: cotizacionOriginal?.añosLicencia || 'No especificado',
+      añosLicenciaTexto: añosLicenciaTexto[cotizacionOriginal?.añosLicencia] || cotizacionOriginal?.añosLicencia || 'No especificado',
+      historialSiniestros: cotizacionOriginal?.historialSiniestros || 'No especificado'
+    };
+    
+    console.log('Póliza completa con datos:', polizaCompleta);
+    
+    setPolizaSeleccionada(polizaCompleta);
+    setMostrarModalDetalle(true);
   };
 
   const editarPoliza = (poliza) => {
@@ -178,6 +230,10 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
   };
 
   const descargarPoliza = (poliza) => {
+    // Buscar datos adicionales de la cotización original
+    const cotizaciones = JSON.parse(localStorage.getItem('cotizaciones') || '[]');
+    const cotizacionOriginal = cotizaciones.find(cot => cot.id === poliza.solicitudId);
+    
     const doc = new jsPDF();
     
     // Configuración de colores y fuentes
@@ -197,7 +253,7 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'normal');
-    doc.text('CERTIFICADO DE PÓLIZA', 105, 30, { align: 'center' });
+    doc.text('CERTIFICADO DE PÓLIZA COMPLETO', 105, 30, { align: 'center' });
     
     // Información de la póliza
     doc.setTextColor(...textColor);
@@ -238,7 +294,32 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
     doc.setFont('helvetica', 'bold');
     doc.text('Teléfono:', 25, yPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(poliza.telefono || 'No especificado', 55, yPos);
+    doc.text(poliza.telefono || cotizacionOriginal?.telefono || 'No especificado', 55, yPos);
+    
+    yPos += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Email:', 25, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(cotizacionOriginal?.email || 'No especificado', 55, yPos);
+    
+    yPos += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Edad:', 25, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(cotizacionOriginal?.edadConductor ? `${cotizacionOriginal.edadConductor} años` : 'No especificado', 55, yPos);
+    
+    yPos += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Años de licencia:', 25, yPos);
+    doc.setFont('helvetica', 'normal');
+    const añosLicenciaTexto = {
+      'menos-1': 'Menos de 1 año',
+      '1-3': '1-3 años',
+      '4-7': '4-7 años', 
+      '8-15': '8-15 años',
+      'mas-15': 'Más de 15 años'
+    };
+    doc.text(añosLicenciaTexto[cotizacionOriginal?.añosLicencia] || cotizacionOriginal?.añosLicencia || 'No especificado', 75, yPos);
     
     // Información del vehículo
     yPos += 20;
@@ -265,6 +346,19 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
     doc.setFont('helvetica', 'normal');
     doc.text(poliza.placa, 55, yPos);
     
+    yPos += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Valor asegurado:', 25, yPos);
+    doc.setFont('helvetica', 'normal');
+    const valorVehiculo = cotizacionOriginal?.valorVehiculo || 'No especificado';
+    if (valorVehiculo !== 'No especificado') {
+      // Remover comas si existen y formatear
+      const valorNumerico = parseInt(valorVehiculo.toString().replace(/,/g, ''));
+      doc.text(`$${valorNumerico.toLocaleString('es-ES')}`, 75, yPos);
+    } else {
+      doc.text(valorVehiculo, 75, yPos);
+    }
+    
     // Información de la cobertura
     yPos += 20;
     doc.setFillColor(...accentColor);
@@ -282,19 +376,32 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
     doc.setFont('helvetica', 'bold');
     doc.text('Tipo de Cobertura:', 25, yPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(poliza.cobertura || poliza.tipoSeguro, 75, yPos);
+    const tipoSeguroTexto = {
+      'todo-riesgo': 'Todo Riesgo',
+      'premium': 'Premium',
+      'responsabilidad-civil': 'Responsabilidad Civil',
+      'basico': 'Básico'
+    };
+    doc.text(tipoSeguroTexto[poliza.cobertura] || poliza.cobertura || poliza.tipoSeguro, 75, yPos);
     
     yPos += 8;
     doc.setFont('helvetica', 'bold');
     doc.text('Prima Mensual:', 25, yPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(`$${poliza.prima}`, 75, yPos);
+    doc.text(`$${typeof poliza.prima === 'number' ? poliza.prima.toLocaleString('es-ES') : poliza.prima}`, 75, yPos);
+    
+    yPos += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Prima Anual:', 25, yPos);
+    doc.setFont('helvetica', 'normal');
+    const primaAnual = (typeof poliza.prima === 'number' ? poliza.prima * 12 : parseFloat(poliza.prima) * 12) || 0;
+    doc.text(`$${primaAnual.toLocaleString('es-ES')}`, 75, yPos);
     
     yPos += 8;
     doc.setFont('helvetica', 'bold');
     doc.text('Deducible:', 25, yPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(`$${poliza.deducible || '750'}`, 75, yPos);
+    doc.text(`$${(poliza.deducible || cotizacionOriginal?.deducible || '750').toLocaleString('es-ES')}`, 75, yPos);
     
     yPos += 8;
     doc.setFont('helvetica', 'bold');
@@ -304,20 +411,54 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
     
     yPos += 8;
     doc.setFont('helvetica', 'bold');
-    doc.text('Fecha de Vencimiento:', 25, yPos);
+    doc.text('Fecha de inicio:', 25, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(poliza.fechaCreacion, 75, yPos);
+    
+    yPos += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Fecha de vencimiento:', 25, yPos);
     doc.setFont('helvetica', 'normal');
     doc.text(poliza.vencimiento, 75, yPos);
+    
+    // Historial de siniestros (si está disponible)
+    if (cotizacionOriginal?.historialSiniestros) {
+      yPos += 20;
+      doc.setFillColor(...accentColor);
+      doc.rect(20, yPos - 5, 170, 8, 'F');
+      doc.setTextColor(...primaryColor);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('INFORMACIÓN ADICIONAL', 25, yPos);
+      
+      yPos += 15;
+      doc.setTextColor(...textColor);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      
+      doc.setFont('helvetica', 'bold');
+      doc.text('Historial de siniestros:', 25, yPos);
+      doc.setFont('helvetica', 'normal');
+      const historialTexto = {
+        'sin-siniestros': 'Sin siniestros',
+        '1-siniestro': '1 siniestro',
+        '2-siniestros': '2 siniestros', 
+        'muchos-siniestros': 'Múltiples siniestros'
+      };
+      doc.text(historialTexto[cotizacionOriginal.historialSiniestros] || cotizacionOriginal.historialSiniestros, 95, yPos);
+    }
     
     // Nota al pie
     yPos += 30;
     doc.setFillColor(245, 245, 245);
-    doc.rect(20, yPos - 5, 170, 20, 'F');
+    doc.rect(20, yPos - 5, 170, 25, 'F');
     doc.setTextColor(100, 100, 100);
     doc.setFontSize(8);
     doc.setFont('helvetica', 'italic');
     doc.text('Este documento certifica la cobertura de seguro vehicular según los términos', 25, yPos);
     doc.text('y condiciones establecidos en la póliza. Válido únicamente con firma digital.', 25, yPos + 5);
-    doc.text(`Documento generado automáticamente el ${new Date().toLocaleDateString('es-ES')} a las ${new Date().toLocaleTimeString('es-ES')}`, 25, yPos + 12);
+    doc.text(`Documento generado automáticamente el ${new Date().toLocaleDateString('es-ES')} a las ${new Date().toLocaleTimeString('es-ES')}`, 25, yPos + 10);
+    doc.text(`ID de solicitud: ${poliza.solicitudId || 'N/A'} | Cliente ID: ${poliza.clienteId || 'N/A'}`, 25, yPos + 15);
     
     // Pie de página
     doc.setFillColor(...primaryColor);
@@ -331,7 +472,7 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
     doc.text('Tel: (503) 2245-7890 | Email: info@segurosvehiculares.com', 105, 292, { align: 'center' });
     
     // Descargar el PDF
-    doc.save(`Poliza_${poliza.numeroPoliza}.pdf`);
+    doc.save(`Poliza_${poliza.numeroPoliza}_Completa.pdf`);
   };
 
   const getStatusColor = (estado) => {
@@ -765,6 +906,214 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
               >
                 Solicitar Cotización
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de detalle de póliza */}
+      {mostrarModalDetalle && polizaSeleccionada && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-screen overflow-y-auto">
+            <div className="p-6">
+              {/* Header del modal */}
+              <div className="flex justify-between items-center mb-6 pb-4 border-b">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Detalle Completo de Póliza
+                  </h2>
+                  <p className="text-gray-600 mt-1">N° {polizaSeleccionada.numeroPoliza}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setMostrarModalDetalle(false);
+                    setPolizaSeleccionada(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Contenido del modal */}
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Información del asegurado */}
+                <div className="bg-blue-50 p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
+                    <User className="w-5 h-5 mr-2" />
+                    Información del Asegurado
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Titular:</label>
+                      <p className="text-gray-900">{polizaSeleccionada.titular}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Teléfono:</label>
+                      <p className="text-gray-900">{polizaSeleccionada.telefono || 'No especificado'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Email:</label>
+                      <p className="text-gray-900">{polizaSeleccionada.email || 'No especificado'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Edad:</label>
+                      <p className="text-gray-900">{polizaSeleccionada.edad ? `${polizaSeleccionada.edad} años` : 'No especificado'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Años de licencia:</label>
+                      <p className="text-gray-900">{polizaSeleccionada.añosLicenciaTexto || (() => {
+                        const añosLicenciaTexto = {
+                          'menos-1': 'Menos de 1 año',
+                          '1-3': '1-3 años',
+                          '4-7': '4-7 años', 
+                          '8-15': '8-15 años',
+                          'mas-15': 'Más de 15 años'
+                        };
+                        return añosLicenciaTexto[polizaSeleccionada.añosLicencia] || polizaSeleccionada.añosLicencia || 'No especificado';
+                      })()}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Información del vehículo */}
+                <div className="bg-green-50 p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-green-900 mb-4 flex items-center">
+                    <Car className="w-5 h-5 mr-2" />
+                    Información del Vehículo
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Vehículo:</label>
+                      <p className="text-gray-900">{polizaSeleccionada.vehiculo}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Placa:</label>
+                      <p className="text-gray-900">{polizaSeleccionada.placa}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Valor asegurado:</label>
+                      <p className="text-gray-900 text-lg font-semibold">
+                        {polizaSeleccionada.valorVehiculoNumerico && polizaSeleccionada.valorVehiculoNumerico > 0 ? 
+                          `$${polizaSeleccionada.valorVehiculoNumerico.toLocaleString('es-ES')}` : 
+                          (polizaSeleccionada.valorVehiculo && polizaSeleccionada.valorVehiculo !== 'No especificado' ? 
+                            `$${polizaSeleccionada.valorVehiculo}` : 
+                            'No especificado'
+                          )
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detalles de la cobertura */}
+                <div className="bg-purple-50 p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-purple-900 mb-4 flex items-center">
+                    <Shield className="w-5 h-5 mr-2" />
+                    Detalles de la Cobertura
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Tipo de cobertura:</label>
+                      <p className="text-gray-900">{polizaSeleccionada.cobertura || polizaSeleccionada.tipoSeguro}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Prima mensual:</label>
+                      <p className="text-gray-900 text-lg font-semibold">${polizaSeleccionada.prima}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Prima anual:</label>
+                      <p className="text-gray-900">${(parseFloat(polizaSeleccionada.prima) * 12).toLocaleString('es-ES')}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Deducible:</label>
+                      <p className="text-gray-900">${polizaSeleccionada.deducible || '750'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Estado y fechas */}
+                <div className="bg-gray-50 p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Calendar className="w-5 h-5 mr-2" />
+                    Estado y Fechas
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Estado actual:</label>
+                      <div className="flex items-center mt-1">
+                        <span 
+                          className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white"
+                          style={{backgroundColor: getStatusColor(polizaSeleccionada.estado)}}
+                        >
+                          {getStatusIcon(polizaSeleccionada.estado)}
+                          <span className="ml-1">{polizaSeleccionada.estado}</span>
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Fecha de inicio:</label>
+                      <p className="text-gray-900">{polizaSeleccionada.fechaCreacion}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Fecha de vencimiento:</label>
+                      <p className="text-gray-900">{polizaSeleccionada.vencimiento}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Información adicional */}
+                {polizaSeleccionada.historialSiniestros && polizaSeleccionada.historialSiniestros !== 'No especificado' && (
+                  <div className="md:col-span-2 bg-orange-50 p-6 rounded-lg">
+                    <h3 className="text-lg font-semibold text-orange-900 mb-4 flex items-center">
+                      <AlertTriangle className="w-5 h-5 mr-2" />
+                      Información Adicional
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Historial de siniestros:</label>
+                        <p className="text-gray-900">{(() => {
+                          const historialTexto = {
+                            'sin-siniestros': 'Sin siniestros',
+                            '1-siniestro': '1 siniestro',
+                            '2-siniestros': '2 siniestros', 
+                            'muchos-siniestros': 'Múltiples siniestros'
+                          };
+                          return historialTexto[polizaSeleccionada.historialSiniestros] || polizaSeleccionada.historialSiniestros;
+                        })()}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">ID de solicitud:</label>
+                        <p className="text-gray-900">{polizaSeleccionada.solicitudId}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Cliente ID:</label>
+                        <p className="text-gray-900">{polizaSeleccionada.clienteId}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Botones de acción */}
+              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
+                <button
+                  onClick={() => descargarPoliza(polizaSeleccionada)}
+                  className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Descargar PDF Completo
+                </button>
+                <button
+                  onClick={() => {
+                    setMostrarModalDetalle(false);
+                    setPolizaSeleccionada(null);
+                  }}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                >
+                  Cerrar
+                </button>
+              </div>
             </div>
           </div>
         </div>
