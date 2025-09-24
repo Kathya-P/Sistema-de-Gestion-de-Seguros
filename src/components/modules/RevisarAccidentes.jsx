@@ -15,7 +15,6 @@ import {
   Search,
   Filter,
   Calendar,
-  UserCheck,
   Image,
   Download,
   X
@@ -134,8 +133,6 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
     documentos: []
   });
 
-  const ajustadores = [];
-
   // Cargar accidentes del localStorage al iniciar
   useEffect(() => {
     const accidentesGuardados = JSON.parse(localStorage.getItem('accidentes') || '[]');
@@ -249,17 +246,55 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
     alert(`✅ Accidente reportado exitosamente con número: ${numeroReporte}`);
   };
 
-  const handleAsignarAjustador = (accidenteId, ajustadorNombre) => {
-    setAccidentes(prev => prev.map(acc => 
+  const handleAceptarYEnviarAFraudes = (accidenteId) => {
+    // Buscar el accidente
+    const accidente = accidentes.find(acc => acc.id === accidenteId);
+    if (!accidente) return;
+
+    // Actualizar estado del accidente a "En investigación"
+    const accidentesActualizados = accidentes.map(acc => 
       acc.id === accidenteId 
         ? { 
             ...acc, 
-            ajustador: ajustadorNombre,
-            estado: acc.estado === 'Reportado' ? 'En investigación' : acc.estado,
-            fechaAsignacion: new Date().toISOString().split('T')[0]
+            estado: 'En investigación',
+            fechaEnvioFraudes: new Date().toISOString().split('T')[0],
+            aceptadoPorAdmin: true,
+            enviadoADeteccionFraudes: true
           } 
         : acc
-    ));
+    );
+    
+    setAccidentes(accidentesActualizados);
+    localStorage.setItem('accidentes', JSON.stringify(accidentesActualizados));
+
+    // Agregar al sistema de detección de fraudes
+    const casosDeteccionFraudes = JSON.parse(localStorage.getItem('casosDeteccionFraudes') || '[]');
+    
+    const nuevoCasoFraude = {
+      id: `FRAUD-${accidenteId}`,
+      accidenteId: accidenteId,
+      numeroReporte: accidente.id,
+      cliente: accidente.cliente,
+      vehiculo: accidente.vehiculo,
+      ubicacion: accidente.ubicacion,
+      fechaAccidente: accidente.fecha,
+      fechaReporte: accidente.fechaReporte,
+      gravedad: accidente.gravedad,
+      descripcion: accidente.descripcion,
+      fotos: accidente.fotos || [],
+      documentos: accidente.documentos || [],
+      estado: 'Pendiente Revisión',
+      fechaEnvio: new Date().toISOString().split('T')[0],
+      prioridad: accidente.gravedad === 'Grave' ? 'Alta' : 
+                 accidente.gravedad === 'Leve' ? 'Baja' : 'Media',
+      riesgoFraude: 'No evaluado',
+      observacionesAdmin: 'Accidente aceptado y enviado desde Revisión de Accidentes'
+    };
+
+    const nuevosCasosFraudes = [...casosDeteccionFraudes, nuevoCasoFraude];
+    localStorage.setItem('casosDeteccionFraudes', JSON.stringify(nuevosCasosFraudes));
+
+    alert(`✅ Accidente ${accidenteId} aceptado y enviado a Detección de Fraudes para análisis`);
   };
 
   const handleCambiarEstado = (accidenteId, nuevoEstado) => {
@@ -979,7 +1014,7 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
                       Gravedad
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ajustador
+                      Estado del Proceso
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Acciones
@@ -1026,7 +1061,12 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {accidente.ajustador || 'No asignado'}
+                          {accidente.enviadoADeteccionFraudes 
+                            ? 'En Detección de Fraudes' 
+                            : accidente.aceptadoPorAdmin 
+                              ? 'Aceptado por Admin'
+                              : 'Pendiente Revisión'
+                          }
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -1041,26 +1081,30 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          {permissions?.isAdmin && !accidente.ajustador && (
-                            <select
-                              onChange={(e) => handleAsignarAjustador(accidente.id, e.target.value)}
-                              className="text-xs border border-gray-300 rounded px-2 py-1"
-                              defaultValue=""
-                            >
-                              <option value="" disabled>Asignar</option>
-                              {ajustadores.map(adj => (
-                                <option key={adj.id} value={adj.nombre}>{adj.nombre}</option>
-                              ))}
-                            </select>
-                          )}
-                          {permissions?.isAdmin && accidente.estado === 'En investigación' && (
+                          {permissions?.isAdmin && accidente.estado === 'Reportado' && (
                             <button
-                              onClick={() => handleCambiarEstado(accidente.id, 'Completado')}
-                              className="text-green-600 hover:text-green-800 transition-colors"
-                              title="Marcar completado"
+                              onClick={() => handleAceptarYEnviarAFraudes(accidente.id)}
+                              className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs transition-colors flex items-center"
+                              title="Aceptar y enviar a Detección de Fraudes"
                             >
-                              <CheckCircle className="w-4 h-4" />
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Aceptar
                             </button>
+                          )}
+                          {permissions?.isAdmin && accidente.estado === 'En investigación' && !accidente.enviadoADeteccionFraudes && (
+                            <button
+                              onClick={() => handleAceptarYEnviarAFraudes(accidente.id)}
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs transition-colors flex items-center"
+                              title="Enviar a Detección de Fraudes"
+                            >
+                              <FileText className="w-3 h-3 mr-1" />
+                              Enviar a Fraudes
+                            </button>
+                          )}
+                          {permissions?.isAdmin && accidente.enviadoADeteccionFraudes && (
+                            <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                              En Detección Fraudes
+                            </span>
                           )}
                         </div>
                       </td>
@@ -1102,7 +1146,13 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
                     <p><span className="font-medium">Placa:</span> {accidenteSeleccionado.placa}</p>
                     <p><span className="font-medium">Fecha:</span> {accidenteSeleccionado.fecha} {accidenteSeleccionado.hora}</p>
                     <p><span className="font-medium">Ubicación:</span> {accidenteSeleccionado.ubicacion}</p>
-                    <p><span className="font-medium">Ajustador:</span> {accidenteSeleccionado.ajustador || 'No asignado'}</p>
+                    <p><span className="font-medium">Estado del Proceso:</span> {
+                      accidenteSeleccionado.enviadoADeteccionFraudes 
+                        ? 'En Detección de Fraudes' 
+                        : accidenteSeleccionado.aceptadoPorAdmin 
+                          ? 'Aceptado por Admin'
+                          : 'Pendiente Revisión'
+                    }</p>
                   </div>
                 </div>
                 
