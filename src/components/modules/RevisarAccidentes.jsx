@@ -17,7 +17,8 @@ import {
   Calendar,
   UserCheck,
   Image,
-  Download
+  Download,
+  X
 } from 'lucide-react';
 import { sessionManager } from '../../utils/sessionManager';
 
@@ -135,6 +136,13 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
 
   const ajustadores = [];
 
+  // Cargar accidentes del localStorage al iniciar
+  useEffect(() => {
+    const accidentesGuardados = JSON.parse(localStorage.getItem('accidentes') || '[]');
+    setAccidentes(accidentesGuardados);
+    console.log('📋 Accidentes cargados desde localStorage:', accidentesGuardados);
+  }, []);
+
   const filteredAccidentes = accidentes.filter(accidente => {
     // Si es cliente, solo mostrar sus propios accidentes
     if (permissions?.isCliente) {
@@ -154,14 +162,22 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
   });
 
   const handleReportarAccidente = () => {
-    // Validaciones
+    // Validaciones básicas
     if (!nuevoAccidente.vehiculoId || !nuevoAccidente.fecha || !nuevoAccidente.hora || 
         !nuevoAccidente.ubicacion || !nuevoAccidente.tipoAccidente || !nuevoAccidente.descripcionDaños) {
       alert('Por favor complete todos los campos requeridos');
       return;
     }
 
-    const nuevoId = accidentes.length > 0 ? Math.max(...accidentes.map(a => a.id)) + 1 : 1;
+    // Validación de fotos obligatorias
+    if (!nuevoAccidente.fotos || nuevoAccidente.fotos.length === 0) {
+      alert('⚠️ Es obligatorio subir al menos una foto del accidente para poder reportarlo.');
+      return;
+    }
+
+    // Obtener accidentes existentes del localStorage
+    const accidentesExistentes = JSON.parse(localStorage.getItem('accidentes') || '[]');
+    const nuevoId = accidentesExistentes.length > 0 ? Math.max(...accidentesExistentes.map(a => a.id)) + 1 : 1;
     const numeroReporte = `ACC-${String(nuevoId).padStart(3, '0')}`;
     const currentUser = sessionManager.getCurrentUser();
     
@@ -174,6 +190,7 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
       id: nuevoId,
       numeroReporte,
       cliente: currentUser.name,
+      clienteId: currentUser.id,
       polizaId: nuevoAccidente.polizaId,
       vehiculo: `${nuevoAccidente.marca} ${nuevoAccidente.modelo} ${nuevoAccidente.año}`,
       placa: nuevoAccidente.placa,
@@ -186,14 +203,30 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
       estado: 'Reportado',
       gravedad: nuevoAccidente.gravedad,
       ajustador: null,
-      fotos: nuevoAccidente.fotos,
-      documentos: nuevoAccidente.documentos,
+      fotos: nuevoAccidente.fotos.map(file => ({
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        lastModified: file.lastModified,
+        url: URL.createObjectURL(file) // Para vista previa
+      })),
+      documentos: nuevoAccidente.documentos.map(file => ({
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        lastModified: file.lastModified
+      })),
       montoEstimado: 0,
       fechaReporte: new Date().toISOString().split('T')[0],
       fechaAsignacion: null
     };
 
-    setAccidentes(prev => [...prev, accidente]);
+    // Guardar en localStorage
+    const nuevosAccidentes = [...accidentesExistentes, accidente];
+    localStorage.setItem('accidentes', JSON.stringify(nuevosAccidentes));
+    
+    // Actualizar estados
+    setAccidentes(nuevosAccidentes);
     setNuevoAccidente({
       polizaId: '',
       vehiculoId: '',
@@ -300,12 +333,67 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
 
   const handleFileChange = (e, type) => {
     const files = Array.from(e.target.files);
+    console.log(`📁 Archivos seleccionados para ${type}:`, files);
+    
     if (files.length > 0) {
-      setNuevoAccidente(prev => ({
-        ...prev,
-        [type]: [...prev[type], ...files]
-      }));
+      // Validar tamaño de archivos (10MB máximo por archivo)
+      const invalidFiles = files.filter(file => file.size > 10 * 1024 * 1024);
+      if (invalidFiles.length > 0) {
+        alert(`Los siguientes archivos exceden el límite de 10MB:\n${invalidFiles.map(f => f.name).join('\n')}`);
+        return;
+      }
+
+      // Validar tipos de archivo
+      if (type === 'fotos') {
+        const invalidTypes = files.filter(file => !file.type.startsWith('image/'));
+        if (invalidTypes.length > 0) {
+          alert(`Solo se permiten archivos de imagen.\nArchivos inválidos:\n${invalidTypes.map(f => f.name).join('\n')}`);
+          return;
+        }
+      } else if (type === 'documentos') {
+        const allowedTypes = [
+          'application/pdf', 
+          'application/msword', 
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'text/plain'
+        ];
+        const invalidTypes = files.filter(file => !allowedTypes.includes(file.type));
+        if (invalidTypes.length > 0) {
+          alert(`Solo se permiten archivos PDF, DOC, DOCX o TXT.\nArchivos inválidos:\n${invalidTypes.map(f => f.name).join('\n')}`);
+          return;
+        }
+      }
+
+      // Agregar archivos al estado
+      setNuevoAccidente(prev => {
+        const newState = {
+          ...prev,
+          [type]: [...prev[type], ...files]
+        };
+        console.log(`📋 Estado actualizado para ${type}:`, newState[type]);
+        return newState;
+      });
+      
+      // Limpiar el input para permitir seleccionar el mismo archivo de nuevo si es necesario
+      e.target.value = '';
     }
+  };
+
+  // Función para remover archivos
+  const removeFile = (index, type) => {
+    setNuevoAccidente(prev => ({
+      ...prev,
+      [type]: prev[type].filter((_, i) => i !== index)
+    }));
+  };
+
+  // Función para formatear el tamaño de archivo
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   // Función para renderizar el formulario de reporte (mejorado)
@@ -539,9 +627,13 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Fotos del Accidente
+                  Fotos del Accidente <span className="text-red-500">* (Obligatorio)</span>
                 </label>
-                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                <div className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-colors ${
+                  nuevoAccidente.fotos.length === 0 
+                    ? 'border-red-300 bg-red-50' 
+                    : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+                }`}>
                   <div className="space-y-1 text-center">
                     <Camera className="mx-auto h-12 w-12 text-gray-400" />
                     <div className="flex text-sm text-gray-600">
@@ -551,18 +643,57 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
                           type="file"
                           multiple
                           accept="image/*"
-                          onChange={(e) => handleFileChange(e, 'fotos')}
+                          onChange={(e) => {
+                            console.log('🔍 Input de fotos cambiado:', e.target.files);
+                            handleFileChange(e, 'fotos');
+                          }}
                           className="sr-only"
                         />
                       </label>
                     </div>
                     <p className="text-xs text-gray-500">PNG, JPG hasta 10MB cada una</p>
+                    <p className="text-xs text-red-500 font-medium">⚠️ Mínimo 1 foto requerida para reportar el accidente</p>
                     <p className="text-xs text-gray-400">Se recomiendan fotos del vehículo, lugar del accidente y documentos</p>
                   </div>
                 </div>
+                
+                {/* Vista previa de fotos */}
                 {nuevoAccidente.fotos.length > 0 && (
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-500">{nuevoAccidente.fotos.length} fotos seleccionadas</p>
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-medium text-gray-700">
+                        Fotos seleccionadas ({nuevoAccidente.fotos.length})
+                      </h4>
+                      <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                        ✅ Requisito cumplido
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {nuevoAccidente.fotos.map((file, index) => (
+                        <div key={index} className="relative group">
+                          <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={`Foto ${index + 1}`}
+                              className="w-full h-full object-cover image-preview"
+                            />
+                          </div>
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity rounded-lg flex items-center justify-center">
+                            <button
+                              type="button"
+                              onClick={() => removeFile(index, 'fotos')}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity bg-red-600 text-white rounded-full p-2 hover:bg-red-700"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <div className="mt-2">
+                            <p className="text-xs text-gray-600 truncate">{file.name}</p>
+                            <p className="text-xs text-gray-400">{formatFileSize(file.size)}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -581,7 +712,10 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
                           type="file"
                           multiple
                           accept=".pdf,.doc,.docx"
-                          onChange={(e) => handleFileChange(e, 'documentos')}
+                          onChange={(e) => {
+                            console.log('🔍 Input de documentos cambiado:', e.target.files);
+                            handleFileChange(e, 'documentos');
+                          }}
                           className="sr-only"
                         />
                       </label>
@@ -590,9 +724,43 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
                     <p className="text-xs text-gray-400">Parte policial, cotizaciones de reparación, etc.</p>
                   </div>
                 </div>
+                
+                {/* Lista de documentos */}
                 {nuevoAccidente.documentos.length > 0 && (
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-500">{nuevoAccidente.documentos.length} documentos seleccionados</p>
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">
+                      Documentos seleccionados ({nuevoAccidente.documentos.length})
+                    </h4>
+                    <div className="space-y-2">
+                      {nuevoAccidente.documentos.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-shrink-0">
+                              {file.type === 'application/pdf' ? (
+                                <div className="w-8 h-8 bg-red-100 rounded flex items-center justify-center">
+                                  <FileText className="w-4 h-4 text-red-600" />
+                                </div>
+                              ) : (
+                                <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                                  <FileText className="w-4 h-4 text-blue-600" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
+                              <p className="text-sm text-gray-500">{formatFileSize(file.size)}</p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeFile(index, 'documentos')}
+                            className="flex-shrink-0 text-red-600 hover:text-red-800 transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -631,6 +799,21 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
 
   return (
     <div className="space-y-6">
+      <style>
+        {`
+          .image-preview:hover {
+            transform: scale(1.02);
+            transition: transform 0.2s ease-in-out;
+          }
+          .file-upload-zone {
+            transition: all 0.3s ease;
+          }
+          .file-upload-zone:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+          }
+        `}
+      </style>
       {/* Header */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-4">
@@ -931,44 +1114,87 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
               
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Fotos ({accidenteSeleccionado.fotos.length})</h4>
-                  <div className="grid grid-cols-3 gap-2">
-                    {accidenteSeleccionado.fotos.map((foto, index) => (
-                      <div key={index} className="bg-gray-100 rounded-lg p-4 text-center">
-                        <Image className="w-8 h-8 text-gray-400 mx-auto mb-1" />
-                        <p className="text-xs text-gray-600">{foto}</p>
-                      </div>
-                    ))}
-                    {permissions?.canUploadAccidentPhotos && (
-                      <div className="bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg p-4 text-center cursor-pointer hover:bg-blue-100">
-                        <Upload className="w-8 h-8 text-blue-400 mx-auto mb-1" />
-                        <p className="text-xs text-blue-600">Subir foto</p>
-                      </div>
-                    )}
-                  </div>
+                  <h4 className="font-medium text-gray-900 mb-2">Fotos ({accidenteSeleccionado.fotos?.length || 0})</h4>
+                  {accidenteSeleccionado.fotos && accidenteSeleccionado.fotos.length > 0 ? (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {accidenteSeleccionado.fotos.map((foto, index) => (
+                        <div key={index} className="relative group">
+                          {foto.url ? (
+                            <img
+                              src={foto.url}
+                              alt={`Foto ${index + 1}`}
+                              className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity"
+                              onClick={() => window.open(foto.url, '_blank')}
+                            />
+                          ) : (
+                            <div className="w-full h-24 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <div className="text-center">
+                                <Image className="w-6 h-6 text-gray-400 mx-auto mb-1" />
+                                <p className="text-xs text-gray-600">{foto.name || `Foto ${index + 1}`}</p>
+                              </div>
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all rounded-lg flex items-center justify-center">
+                            <Eye className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">No hay fotos disponibles</p>
+                  )}
+                  {permissions?.canUploadAccidentPhotos && (
+                    <div className="mt-3">
+                      <label className="inline-flex items-center px-3 py-2 bg-blue-50 border border-blue-300 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors">
+                        <Upload className="w-4 h-4 text-blue-600 mr-2" />
+                        <span className="text-sm text-blue-700">Agregar foto</span>
+                        <input type="file" accept="image/*" className="sr-only" />
+                      </label>
+                    </div>
+                  )}
                 </div>
                 
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Documentos ({accidenteSeleccionado.documentos.length})</h4>
-                  <div className="space-y-2">
-                    {accidenteSeleccionado.documentos.map((doc, index) => (
-                      <div key={index} className="flex items-center justify-between bg-gray-50 rounded p-2">
-                        <div className="flex items-center">
-                          <FileText className="w-4 h-4 text-gray-400 mr-2" />
-                          <span className="text-sm text-gray-700">{doc}</span>
+                  <h4 className="font-medium text-gray-900 mb-2">Documentos ({accidenteSeleccionado.documentos?.length || 0})</h4>
+                  {accidenteSeleccionado.documentos && accidenteSeleccionado.documentos.length > 0 ? (
+                    <div className="space-y-2">
+                      {accidenteSeleccionado.documentos.map((doc, index) => (
+                        <div key={index} className="flex items-center justify-between bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-shrink-0">
+                              {doc.type === 'application/pdf' ? (
+                                <div className="w-8 h-8 bg-red-100 rounded flex items-center justify-center">
+                                  <FileText className="w-4 h-4 text-red-600" />
+                                </div>
+                              ) : (
+                                <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                                  <FileText className="w-4 h-4 text-blue-600" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-gray-900 truncate">{doc.name}</p>
+                              {doc.size && <p className="text-xs text-gray-500">{formatFileSize(doc.size)}</p>}
+                            </div>
+                          </div>
+                          <button className="text-blue-600 hover:text-blue-800 transition-colors" title="Descargar">
+                            <Download className="w-4 h-4" />
+                          </button>
                         </div>
-                        <button className="text-blue-600 hover:text-blue-800">
-                          <Download className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                    {permissions?.canUploadAccidentDocuments && (
-                      <div className="bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg p-3 text-center cursor-pointer hover:bg-blue-100">
-                        <Upload className="w-5 h-5 text-blue-400 mx-auto mb-1" />
-                        <p className="text-sm text-blue-600">Subir documento</p>
-                      </div>
-                    )}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">No hay documentos disponibles</p>
+                  )}
+                  {permissions?.canUploadAccidentDocuments && (
+                    <div className="mt-3">
+                      <label className="inline-flex items-center px-3 py-2 bg-blue-50 border border-blue-300 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors">
+                        <Upload className="w-4 h-4 text-blue-600 mr-2" />
+                        <span className="text-sm text-blue-700">Agregar documento</span>
+                        <input type="file" accept=".pdf,.doc,.docx" className="sr-only" />
+                      </label>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
