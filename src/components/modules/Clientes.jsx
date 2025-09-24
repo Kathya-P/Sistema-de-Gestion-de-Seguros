@@ -14,7 +14,7 @@ import {
   Trash2
 } from 'lucide-react';
 
-const Clientes = ({ clientes, setClientes, permissions }) => {
+const Clientes = ({ clientes, setClientes, permissions, onClientesUpdated }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('todos');
   const [selectedCliente, setSelectedCliente] = useState(null);
@@ -32,10 +32,40 @@ const Clientes = ({ clientes, setClientes, permissions }) => {
   };
 
   const confirmarEliminacion = () => {
-    const nuevosClientes = clientes.filter(c => c.id !== selectedCliente.id);
-    setClientes(nuevosClientes);
-    setShowDeleteConfirm(false);
-    setSelectedCliente(null);
+    if (!selectedCliente) return;
+
+    try {
+      // Eliminar el cliente de la lista local
+      const nuevosClientes = clientes.filter(c => c.id !== selectedCliente.id);
+      setClientes(nuevosClientes);
+      
+      // Eliminar el usuario del localStorage usando la clave correcta
+      const users = JSON.parse(localStorage.getItem('seguros_users_data') || '[]');
+      const updatedUsers = users.filter(user => user.id !== selectedCliente.id);
+      localStorage.setItem('seguros_users_data', JSON.stringify(updatedUsers));
+      
+      // Eliminar las pólizas asociadas al cliente del localStorage
+      const polizas = JSON.parse(localStorage.getItem('polizas') || '[]');
+      const polizasActualizadas = polizas.filter(poliza => {
+        // Verificar que poliza.cliente existe y no es undefined antes de usar toLowerCase
+        if (!poliza.cliente) return true;
+        return poliza.cliente.toLowerCase() !== selectedCliente.nombre.toLowerCase();
+      });
+      localStorage.setItem('polizas', JSON.stringify(polizasActualizadas));
+
+      // Actualizar la lista de clientes
+      if (onClientesUpdated) {
+        onClientesUpdated();
+      }
+      
+      setShowDeleteConfirm(false);
+      setSelectedCliente(null);
+    } catch (error) {
+      console.error('Error al eliminar cliente:', error);
+      // Manejar el error apropiadamente, tal vez mostrar un mensaje al usuario
+      setShowDeleteConfirm(false);
+      setSelectedCliente(null);
+    }
   };
 
   const filteredClientes = clientes.filter(cliente => {

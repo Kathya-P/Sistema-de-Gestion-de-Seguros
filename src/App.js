@@ -72,20 +72,76 @@ const SistemaSeguroVehicular = () => {
     // Cargar usuarios registrados como clientes
     const registeredUsers = userManager.getAllUsers();
     console.log('Usuarios registrados:', registeredUsers);
+    
+    // Función para contar pólizas activas de un usuario
+    const contarPolizasActivas = (userName) => {
+      return polizasGuardadas.filter(poliza => 
+        poliza.cliente && 
+        poliza.cliente.toLowerCase() === userName.toLowerCase() && 
+        poliza.estado === 'Aprobada'
+      ).length;
+    };
+
+    // Procesar usuarios y sus pólizas
     const clientesRegistrados = registeredUsers
-      .filter(user => user.rol !== 'admin' && user.role !== 'Administrador') // Excluir administradores
-      .map(user => ({
-        id: user.id,
-        nombre: user.name,
-        email: user.email,
-        numeroDocumento: user.username,
-        telefono: user.phone || '',
-        polizasActivas: polizasGuardadas.filter(p => p.cliente === user.name && p.estado === 'Aprobada').length,
-        fechaRegistro: user.createdAt
-      }));
+      .filter(user => {
+        // Excluir administradores
+        const isAdmin = user.rol === 'admin' || user.role === 'Administrador';
+        // Verificar si tiene pólizas asociadas
+        const tienePolizas = contarPolizasActivas(user.name) > 0;
+        // Incluir solo usuarios no admin y que tengan pólizas
+        return !isAdmin;
+      })
+      .map(user => {
+        const polizasActivas = contarPolizasActivas(user.name);
+        console.log(`Usuario ${user.name} tiene ${polizasActivas} pólizas activas`);
+        
+        return {
+          id: user.id,
+          nombre: user.name,
+          email: user.email,
+          numeroDocumento: user.username,
+          telefono: user.phone || '',
+          polizasActivas,
+          fechaRegistro: user.createdAt,
+          direccion: user.address || '',
+          tipoDocumento: user.documentType || 'DNI',
+          status: polizasActivas > 0 ? 'activo' : 'inactivo'
+        };
+      });
     console.log('Clientes procesados:', clientesRegistrados);
     setClientes(clientesRegistrados);
   }, []);
+
+  // Función para actualizar la lista de clientes desde el localStorage
+  const actualizarListaClientes = () => {
+    const registeredUsers = userManager.getAllUsers();
+    const polizasGuardadas = JSON.parse(localStorage.getItem('polizas') || '[]');
+    
+    const clientesRegistrados = registeredUsers
+      .filter(user => user.rol !== 'admin' && user.role !== 'Administrador')
+      .map(user => {
+        const polizasActivas = polizasGuardadas.filter(p => 
+          p.cliente && p.cliente.toLowerCase() === user.name.toLowerCase() && 
+          p.estado === 'Aprobada'
+        ).length;
+        
+        return {
+          id: user.id,
+          nombre: user.name,
+          email: user.email,
+          numeroDocumento: user.username,
+          telefono: user.phone || '',
+          polizasActivas,
+          fechaRegistro: user.createdAt,
+          direccion: user.address || '',
+          tipoDocumento: user.documentType || 'DNI',
+          status: polizasActivas > 0 ? 'activo' : 'inactivo'
+        };
+      });
+    
+    setClientes(clientesRegistrados);
+  };
 
   // Funciones de autenticación
   const handleLogin = (username, password) => {
@@ -95,6 +151,9 @@ const SistemaSeguroVehicular = () => {
       setCurrentUser(user);
       setShowLogin(false);
       setShowLandingPage(false); // Solo ocultar landing page después del login exitoso
+      
+      // Actualizar la lista de clientes
+      actualizarListaClientes();
       
       // Guardar sesión
       sessionManager.saveSession(user);
@@ -127,15 +186,24 @@ const SistemaSeguroVehicular = () => {
       const registeredUsers = userManager.getAllUsers();
       const clientesRegistrados = registeredUsers
         .filter(user => user.rol !== 'admin' && user.role !== 'Administrador')
-        .map(user => ({
-          id: user.id,
-          nombre: user.name,
-          email: user.email,
-          numeroDocumento: user.username,
-          telefono: user.phone || '',
-          polizasActivas: polizas.filter(p => p.cliente === user.name && p.estado === 'Aprobada').length,
-          fechaRegistro: user.createdAt
-        }));
+        .map(user => {
+          const polizasActivas = polizas.filter(p => 
+            (p.cliente && p.cliente.toLowerCase() === user.name.toLowerCase()) && 
+            p.estado === 'Aprobada'
+          ).length;
+          
+          return {
+            id: user.id,
+            nombre: user.name,
+            email: user.email,
+            numeroDocumento: user.username,
+            telefono: user.phone || '',
+            polizasActivas,
+            fechaRegistro: user.createdAt,
+            direccion: user.address || '',
+            tipoDocumento: user.documentType || 'DNI'
+          };
+        });
       setClientes(clientesRegistrados);
     }
     return success;
@@ -248,7 +316,12 @@ const SistemaSeguroVehicular = () => {
       case 'polizas':
         return <Polizas polizas={polizas} setPolizas={setPolizas} permissions={permissions} setActiveModule={handleModuleChange} />;
       case 'clientes':
-        return <Clientes clientes={clientes} setClientes={setClientes} permissions={permissions} />;
+        return <Clientes 
+                clientes={clientes} 
+                setClientes={setClientes} 
+                permissions={permissions} 
+                onClientesUpdated={actualizarListaClientes}
+              />;
       case 'cotizaciones':
         return <Cotizaciones resultadoCotizacion={resultadoCotizacion} handleCalcular={handleCalcular} permissions={permissions} />;
       case 'fraudes':
