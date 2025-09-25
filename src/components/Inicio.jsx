@@ -85,7 +85,7 @@ const Inicio = ({
           <div className="flex items-center mb-4">
             <h3 className="text-xl font-semibold text-gray-900">Métricas Generales</h3>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 h-20 flex items-center hover:shadow-md transition-shadow duration-200">
               <div className="flex justify-between items-center w-full">
                 <div>
@@ -113,16 +113,6 @@ const Inicio = ({
                   <p className="text-xs text-gray-600 mt-1">Propietarios</p>
                 </div>
                 <Users className="w-8 h-8" style={{color: '#2d5016', opacity: 0.2}} />
-              </div>
-            </div>
-
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 h-20 flex items-center hover:shadow-md transition-shadow duration-200">
-              <div className="flex justify-between items-center w-full">
-                <div>
-                  <p className="text-2xl font-bold" style={{color: '#1e3a72'}}>$24,500</p>
-                  <p className="text-xs text-gray-600 mt-1">Primas Cobradas</p>
-                </div>
-                <DollarSign className="w-8 h-8" style={{color: '#1e3a72', opacity: 0.2}} />
               </div>
             </div>
           </div>
@@ -216,7 +206,7 @@ const Inicio = ({
             </div>
           </div>
           <div className="bg-white/60 rounded-lg px-6 py-4 mt-6">
-            <p className="text-xl text-gray-800 mb-2">¡Bienvenido, {currentUser?.nombre || 'Usuario'}!</p>
+            <p className="text-xl text-gray-800 mb-2">¡Bienvenido, {currentUser?.name || 'Usuario'}!</p>
             <p className="text-base text-gray-600">Aquí puedes gestionar tus pólizas vehiculares, reportar accidentes y más</p>
           </div>
         </div>
@@ -229,7 +219,7 @@ const Inicio = ({
           <div className="flex items-center mb-4">
             <h3 className="text-xl font-semibold text-gray-900">Mi Resumen</h3>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 h-20 flex items-center hover:shadow-md transition-shadow duration-200">
               <div className="flex justify-between items-center w-full">
                 <div>
@@ -247,16 +237,6 @@ const Inicio = ({
                   <p className="text-xs text-gray-600 mt-1">Accidentes Reportados</p>
                 </div>
                 <AlertTriangle className="w-8 h-8" style={{color: '#b7541a', opacity: 0.2}} />
-              </div>
-            </div>
-
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 h-20 flex items-center hover:shadow-md transition-shadow duration-200">
-              <div className="flex justify-between items-center w-full">
-                <div>
-                  <p className="text-2xl font-bold" style={{color: '#2d5016'}}>$850</p>
-                  <p className="text-xs text-gray-600 mt-1">Prima Mensual</p>
-                </div>
-                <DollarSign className="w-8 h-8" style={{color: '#2d5016', opacity: 0.2}} />
               </div>
             </div>
           </div>
@@ -294,10 +274,10 @@ const Inicio = ({
                   </div>
                 </div>
                 <div className="flex items-center">
-                  <MapPin className="w-5 h-5 text-gray-500 mr-3" />
+                  <Clock className="w-5 h-5 text-gray-500 mr-3" />
                   <div>
-                    <p className="text-sm text-gray-500">Dirección</p>
-                    <p className="text-base font-medium text-gray-900">San José, Costa Rica</p>
+                    <p className="text-sm text-gray-500">Miembro desde</p>
+                    <p className="text-base font-medium text-gray-900">Septiembre 2025</p>
                   </div>
                 </div>
               </div>
@@ -346,7 +326,7 @@ const Inicio = ({
       </div>
 
       {/* Acciones rápidas para Cliente */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h3 className="text-xl font-semibold text-gray-900 mb-5 flex items-center">
             <Plus className="w-6 h-6 mr-3" style={{color: '#2d5016'}} />
@@ -368,31 +348,6 @@ const Inicio = ({
               </div>
               <span className="text-sm text-gray-500">→</span>
             </button>
-          </div>
-        </div>
-
-        {/* Próximos vencimientos */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-xl font-semibold text-gray-900 mb-5 flex items-center">
-            <Calendar className="w-6 h-6 mr-3" style={{color: '#b7541a'}} />
-            Próximos Vencimientos
-          </h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between py-3 border-b border-gray-100">
-              <div>
-                <p className="text-base font-medium text-gray-900">Seguro Honda Civic</p>
-                <p className="text-sm text-gray-500">Vence en 15 días</p>
-              </div>
-              <span className="text-sm text-orange-600 bg-orange-100 px-3 py-1 rounded-full">Próximo</span>
-            </div>
-            
-            <div className="flex items-center justify-between py-3">
-              <div>
-                <p className="text-base font-medium text-gray-900">Seguro Toyota Corolla</p>
-                <p className="text-sm text-gray-500">Vence en 2 meses</p>
-              </div>
-              <span className="text-sm text-green-600 bg-green-100 px-3 py-1 rounded-full">Al día</span>
-            </div>
           </div>
         </div>
       </div>

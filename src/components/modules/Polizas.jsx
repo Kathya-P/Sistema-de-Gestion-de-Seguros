@@ -913,206 +913,212 @@ const Polizas = ({ polizas, setPolizas, permissions, setActiveModule }) => {
 
       {/* Modal de detalle de póliza */}
       {mostrarModalDetalle && polizaSeleccionada && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-screen overflow-y-auto">
-            <div className="p-6">
-              {/* Header del modal */}
-              <div className="flex justify-between items-center mb-6 pb-4 border-b">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    Detalle Completo de Póliza
-                  </h2>
-                  <p className="text-gray-600 mt-1">N° {polizaSeleccionada.numeroPoliza}</p>
-                </div>
-                <button
-                  onClick={() => {
-                    setMostrarModalDetalle(false);
-                    setPolizaSeleccionada(null);
-                  }}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              {/* Contenido del modal */}
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* Información del asegurado */}
-                <div className="bg-blue-50 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
-                    <User className="w-5 h-5 mr-2" />
-                    Información del Asegurado
-                  </h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Titular:</label>
-                      <p className="text-gray-900">{polizaSeleccionada.titular}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Teléfono:</label>
-                      <p className="text-gray-900">{polizaSeleccionada.telefono || 'No especificado'}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Email:</label>
-                      <p className="text-gray-900">{polizaSeleccionada.email || 'No especificado'}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Edad:</label>
-                      <p className="text-gray-900">{polizaSeleccionada.edad ? `${polizaSeleccionada.edad} años` : 'No especificado'}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Años de licencia:</label>
-                      <p className="text-gray-900">{polizaSeleccionada.añosLicenciaTexto || (() => {
-                        const añosLicenciaTexto = {
-                          'menos-1': 'Menos de 1 año',
-                          '1-3': '1-3 años',
-                          '4-7': '4-7 años', 
-                          '8-15': '8-15 años',
-                          'mas-15': 'Más de 15 años'
-                        };
-                        return añosLicenciaTexto[polizaSeleccionada.añosLicencia] || polizaSeleccionada.añosLicencia || 'No especificado';
-                      })()}</p>
-                    </div>
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity">
+              <div className="absolute inset-0 bg-black bg-opacity-10"></div>
+            </div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            <div className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full border" style={{borderColor: '#03045e'}}>
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                {/* Header del modal */}
+                <div className="flex justify-between items-center mb-6 pb-4 border-b">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      Detalle Completo de Póliza
+                    </h2>
+                    <p className="text-gray-600 mt-1">N° {polizaSeleccionada.numeroPoliza}</p>
                   </div>
+                  <button
+                    onClick={() => {
+                      setMostrarModalDetalle(false);
+                      setPolizaSeleccionada(null);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
                 </div>
 
-                {/* Información del vehículo */}
-                <div className="bg-green-50 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold text-green-900 mb-4 flex items-center">
-                    <Car className="w-5 h-5 mr-2" />
-                    Información del Vehículo
-                  </h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Vehículo:</label>
-                      <p className="text-gray-900">{polizaSeleccionada.vehiculo}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Placa:</label>
-                      <p className="text-gray-900">{polizaSeleccionada.placa}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Valor asegurado:</label>
-                      <p className="text-gray-900 text-lg font-semibold">
-                        {polizaSeleccionada.valorVehiculoNumerico && polizaSeleccionada.valorVehiculoNumerico > 0 ? 
-                          `$${polizaSeleccionada.valorVehiculoNumerico.toLocaleString('es-ES')}` : 
-                          (polizaSeleccionada.valorVehiculo && polizaSeleccionada.valorVehiculo !== 'No especificado' ? 
-                            `$${polizaSeleccionada.valorVehiculo}` : 
-                            'No especificado'
-                          )
-                        }
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Detalles de la cobertura */}
-                <div className="bg-purple-50 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold text-purple-900 mb-4 flex items-center">
-                    <Shield className="w-5 h-5 mr-2" />
-                    Detalles de la Cobertura
-                  </h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Tipo de cobertura:</label>
-                      <p className="text-gray-900">{polizaSeleccionada.cobertura || polizaSeleccionada.tipoSeguro}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Prima mensual:</label>
-                      <p className="text-gray-900 text-lg font-semibold">${polizaSeleccionada.prima}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Prima anual:</label>
-                      <p className="text-gray-900">${(parseFloat(polizaSeleccionada.prima) * 12).toLocaleString('es-ES')}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Deducible:</label>
-                      <p className="text-gray-900">${polizaSeleccionada.deducible || '750'}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Estado y fechas */}
-                <div className="bg-gray-50 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <Calendar className="w-5 h-5 mr-2" />
-                    Estado y Fechas
-                  </h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Estado actual:</label>
-                      <div className="flex items-center mt-1">
-                        <span 
-                          className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white"
-                          style={{backgroundColor: getStatusColor(polizaSeleccionada.estado)}}
-                        >
-                          {getStatusIcon(polizaSeleccionada.estado)}
-                          <span className="ml-1">{polizaSeleccionada.estado}</span>
-                        </span>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Fecha de inicio:</label>
-                      <p className="text-gray-900">{polizaSeleccionada.fechaCreacion}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Fecha de vencimiento:</label>
-                      <p className="text-gray-900">{polizaSeleccionada.vencimiento}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Información adicional */}
-                {polizaSeleccionada.historialSiniestros && polizaSeleccionada.historialSiniestros !== 'No especificado' && (
-                  <div className="md:col-span-2 bg-orange-50 p-6 rounded-lg">
-                    <h3 className="text-lg font-semibold text-orange-900 mb-4 flex items-center">
-                      <AlertTriangle className="w-5 h-5 mr-2" />
-                      Información Adicional
+                {/* Contenido del modal */}
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Información del asegurado */}
+                  <div className="p-6 rounded-lg border-2" style={{backgroundColor: '#f8fafc', borderColor: '#03045e'}}>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center" style={{color: '#03045e'}}>
+                      <User className="w-5 h-5 mr-2" />
+                      Información del Asegurado
                     </h3>
                     <div className="space-y-3">
                       <div>
-                        <label className="text-sm font-medium text-gray-700">Historial de siniestros:</label>
-                        <p className="text-gray-900">{(() => {
-                          const historialTexto = {
-                            'sin-siniestros': 'Sin siniestros',
-                            '1-siniestro': '1 siniestro',
-                            '2-siniestros': '2 siniestros', 
-                            'muchos-siniestros': 'Múltiples siniestros'
+                        <label className="text-sm font-medium text-gray-700">Titular:</label>
+                        <p className="text-gray-900">{polizaSeleccionada.titular}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Teléfono:</label>
+                        <p className="text-gray-900">{polizaSeleccionada.telefono || 'No especificado'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Email:</label>
+                        <p className="text-gray-900">{polizaSeleccionada.email || 'No especificado'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Edad:</label>
+                        <p className="text-gray-900">{polizaSeleccionada.edad ? `${polizaSeleccionada.edad} años` : 'No especificado'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Años de licencia:</label>
+                        <p className="text-gray-900">{polizaSeleccionada.añosLicenciaTexto || (() => {
+                          const añosLicenciaTexto = {
+                            'menos-1': 'Menos de 1 año',
+                            '1-3': '1-3 años',
+                            '4-7': '4-7 años', 
+                            '8-15': '8-15 años',
+                            'mas-15': 'Más de 15 años'
                           };
-                          return historialTexto[polizaSeleccionada.historialSiniestros] || polizaSeleccionada.historialSiniestros;
+                          return añosLicenciaTexto[polizaSeleccionada.añosLicencia] || polizaSeleccionada.añosLicencia || 'No especificado';
                         })()}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">ID de solicitud:</label>
-                        <p className="text-gray-900">{polizaSeleccionada.solicitudId}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">Cliente ID:</label>
-                        <p className="text-gray-900">{polizaSeleccionada.clienteId}</p>
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
 
-              {/* Botones de acción */}
-              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
-                <button
-                  onClick={() => descargarPoliza(polizaSeleccionada)}
-                  className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Descargar PDF Completo
-                </button>
-                <button
-                  onClick={() => {
-                    setMostrarModalDetalle(false);
-                    setPolizaSeleccionada(null);
-                  }}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
-                >
-                  Cerrar
-                </button>
+                  {/* Información del vehículo */}
+                  <div className="p-6 rounded-lg border-2" style={{backgroundColor: '#f0f9ff', borderColor: '#0077b6'}}>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center" style={{color: '#0077b6'}}>
+                      <Car className="w-5 h-5 mr-2" />
+                      Información del Vehículo
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Vehículo:</label>
+                        <p className="text-gray-900">{polizaSeleccionada.vehiculo}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Placa:</label>
+                        <p className="text-gray-900">{polizaSeleccionada.placa}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Valor asegurado:</label>
+                        <p className="text-gray-900 text-lg font-semibold">
+                          {polizaSeleccionada.valorVehiculoNumerico && polizaSeleccionada.valorVehiculoNumerico > 0 ? 
+                            `$${polizaSeleccionada.valorVehiculoNumerico.toLocaleString('es-ES')}` : 
+                            (polizaSeleccionada.valorVehiculo && polizaSeleccionada.valorVehiculo !== 'No especificado' ? 
+                              `$${polizaSeleccionada.valorVehiculo}` : 
+                              'No especificado'
+                            )
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Detalles de la cobertura */}
+                  <div className="p-6 rounded-lg border-2" style={{backgroundColor: '#fefefe', borderColor: '#6c757d'}}>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center" style={{color: '#6c757d'}}>
+                      <Shield className="w-5 h-5 mr-2" />
+                      Detalles de la Cobertura
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Tipo de cobertura:</label>
+                        <p className="text-gray-900">{polizaSeleccionada.cobertura || polizaSeleccionada.tipoSeguro}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Prima mensual:</label>
+                        <p className="text-gray-900 text-lg font-semibold">${polizaSeleccionada.prima}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Prima anual:</label>
+                        <p className="text-gray-900">${(parseFloat(polizaSeleccionada.prima) * 12).toLocaleString('es-ES')}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Deducible:</label>
+                        <p className="text-gray-900">${polizaSeleccionada.deducible || '750'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Estado y fechas */}
+                  <div className="p-6 rounded-lg border-2" style={{backgroundColor: '#f8f9fa', borderColor: '#03045e'}}>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center" style={{color: '#03045e'}}>
+                      <Calendar className="w-5 h-5 mr-2" />
+                      Estado y Fechas
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Estado actual:</label>
+                        <div className="flex items-center mt-1">
+                          <span 
+                            className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white"
+                            style={{backgroundColor: getStatusColor(polizaSeleccionada.estado)}}
+                          >
+                            {getStatusIcon(polizaSeleccionada.estado)}
+                            <span className="ml-1">{polizaSeleccionada.estado}</span>
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Fecha de inicio:</label>
+                        <p className="text-gray-900">{polizaSeleccionada.fechaCreacion}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Fecha de vencimiento:</label>
+                        <p className="text-gray-900">{polizaSeleccionada.vencimiento}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Información adicional */}
+                  {polizaSeleccionada.historialSiniestros && polizaSeleccionada.historialSiniestros !== 'No especificado' && (
+                    <div className="md:col-span-2 bg-orange-50 p-6 rounded-lg">
+                      <h3 className="text-lg font-semibold text-orange-900 mb-4 flex items-center">
+                        <AlertTriangle className="w-5 h-5 mr-2" />
+                        Información Adicional
+                      </h3>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Historial de siniestros:</label>
+                          <p className="text-gray-900">{(() => {
+                            const historialTexto = {
+                              'sin-siniestros': 'Sin siniestros',
+                              '1-siniestro': '1 siniestro',
+                              '2-siniestros': '2 siniestros', 
+                              'muchos-siniestros': 'Múltiples siniestros'
+                            };
+                            return historialTexto[polizaSeleccionada.historialSiniestros] || polizaSeleccionada.historialSiniestros;
+                          })()}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">ID de solicitud:</label>
+                          <p className="text-gray-900">{polizaSeleccionada.solicitudId}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Cliente ID:</label>
+                          <p className="text-gray-900">{polizaSeleccionada.clienteId}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Botones de acción */}
+                <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
+                  <button
+                    onClick={() => descargarPoliza(polizaSeleccionada)}
+                    className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Descargar PDF Completo
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMostrarModalDetalle(false);
+                      setPolizaSeleccionada(null);
+                    }}
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                  >
+                    Cerrar
+                  </button>
+                </div>
               </div>
             </div>
           </div>
