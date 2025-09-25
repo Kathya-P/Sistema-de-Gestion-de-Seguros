@@ -13,6 +13,76 @@ import {
 } from 'lucide-react';
 
 const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) => {
+  // Estados para validaciones en tiempo real
+  const [erroresEnTiempoReal, setErroresEnTiempoReal] = useState([]);
+  const [advertenciasEnTiempoReal, setAdvertenciasEnTiempoReal] = useState([]);
+  
+  // Función para validar datos en tiempo real mientras el usuario escribe
+  const validarEnTiempoReal = (nuevosDatos) => {
+    const errores = [];
+    const advertencias = [];
+
+    // Validar fecha en tiempo real
+    if (nuevosDatos.fechaHora) {
+      const fechaAccidente = new Date(nuevosDatos.fechaHora);
+      const fechaActual = new Date();
+      const hace30Dias = new Date(fechaActual.getTime() - (30 * 24 * 60 * 60 * 1000));
+      
+      if (fechaAccidente > fechaActual) {
+        errores.push('La fecha no puede ser en el futuro');
+      }
+      
+      if (fechaAccidente < hace30Dias) {
+        advertencias.push('Accidente hace más de 30 días');
+      }
+    }
+
+    // Validar montos en tiempo real
+    const costoReparacion = parseFloat(nuevosDatos.costoEstimadoReparacion) || 0;
+    if (costoReparacion > 50000) {
+      advertencias.push('Monto muy alto - Requerirá documentación adicional');
+    }
+
+    // Validar consistencia gravedad vs monto
+    if (nuevosDatos.gravedad && costoReparacion > 0) {
+      if (nuevosDatos.gravedad === 'Leve' && costoReparacion > 5000) {
+        advertencias.push('Monto alto para daño leve');
+      }
+      if (nuevosDatos.gravedad === 'Total' && costoReparacion < 10000) {
+        advertencias.push('Monto bajo para pérdida total');
+      }
+    }
+
+    // Validar longitud de textos
+    if (nuevosDatos.descripcion && nuevosDatos.descripcion.length > 0 && nuevosDatos.descripcion.length < 20) {
+      errores.push('Descripción muy corta (mínimo 20 caracteres)');
+    }
+
+    if (nuevosDatos.ubicacion && nuevosDatos.ubicacion.length > 0 && nuevosDatos.ubicacion.length < 10) {
+      errores.push('Ubicación debe ser más específica');
+    }
+
+    // Validar nombre del conductor
+    if (nuevosDatos.nombreConductor) {
+      const formatoNombre = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+      if (!formatoNombre.test(nuevosDatos.nombreConductor)) {
+        errores.push('Nombre solo puede contener letras');
+      }
+    }
+
+    setErroresEnTiempoReal(errores);
+    setAdvertenciasEnTiempoReal(advertencias);
+  };
+
+  // Función mejorada para manejar cambios de datos con validación
+  const handleDatosChange = (campo, valor) => {
+    const nuevosDatos = { ...datosAccidente, [campo]: valor };
+    setDatosAccidente(nuevosDatos);
+    
+    // Validar en tiempo real
+    validarEnTiempoReal(nuevosDatos);
+  };
+
   const [pasoActual, setPasoActual] = useState(1);
   const [polizaSeleccionada, setPolizaSeleccionada] = useState(null);
   const [validacionCompleta, setValidacionCompleta] = useState(false);
@@ -224,41 +294,212 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
     }));
   };
 
-  const handleSubmit = () => {
-    // Validaciones
+  // Función completa de validación de datos
+  const validarDatosCompletos = () => {
+    const errores = [];
+    const advertencias = [];
+
+    // 1. Validaciones obligatorias básicas
     if (!polizaSeleccionada || !validacionCompleta || !tipoReclamoValido) {
-      alert('❌ Complete todos los pasos de validación');
-      return;
+      errores.push('Complete todos los pasos de validación de póliza y tipo de reclamo');
     }
 
-    if (!datosAccidente.fechaHora || !datosAccidente.ubicacion || !datosAccidente.descripcion || !datosAccidente.gravedad || !datosAccidente.costoEstimadoReparacion) {
-      alert('❌ Complete todos los campos requeridos (incluyendo la gravedad del daño y el costo de reparación de SU vehículo)');
-      return;
+    if (!datosAccidente.fechaHora) {
+      errores.push('La fecha y hora del accidente es obligatoria');
     }
 
-    if (parseFloat(datosAccidente.costoEstimadoReparacion) <= 0) {
-      alert('❌ El costo de reparación de su vehículo debe ser mayor a 0');
-      return;
+    if (!datosAccidente.ubicacion?.trim()) {
+      errores.push('La ubicación específica del accidente es obligatoria');
     }
 
+    if (!datosAccidente.descripcion?.trim() || datosAccidente.descripcion.trim().length < 20) {
+      errores.push('La descripción debe tener al menos 20 caracteres y ser detallada');
+    }
+
+    if (!datosAccidente.gravedad) {
+      errores.push('Debe especificar la gravedad del daño');
+    }
+
+    if (!datosAccidente.nombreConductor?.trim()) {
+      errores.push('El nombre del conductor es obligatorio');
+    }
+
+    // 2. Validaciones de fecha
+    if (datosAccidente.fechaHora) {
+      const fechaAccidente = new Date(datosAccidente.fechaHora);
+      const fechaActual = new Date();
+      const hace30Dias = new Date(fechaActual.getTime() - (30 * 24 * 60 * 60 * 1000));
+      const en2Horas = new Date(fechaActual.getTime() + (2 * 60 * 60 * 1000));
+
+      if (fechaAccidente > en2Horas) {
+        errores.push('La fecha del accidente no puede ser en el futuro');
+      }
+
+      if (fechaAccidente < hace30Dias) {
+        advertencias.push('⚠️ Accidente ocurrió hace más de 30 días. Puede requerir documentación adicional');
+      }
+
+      if (fechaAccidente > fechaActual) {
+        errores.push('La fecha del accidente no puede ser posterior a la fecha actual');
+      }
+    }
+
+    // 3. Validaciones financieras
+    const costoReparacion = parseFloat(datosAccidente.costoEstimadoReparacion) || 0;
+    const gastosMedicos = parseFloat(datosAccidente.gastosMedicos) || 0;
+    const montoTerceros = parseFloat(datosAccidente.montoTerceros) || 0;
+    const montoTotal = costoReparacion + gastosMedicos + montoTerceros;
+
+    if (costoReparacion <= 0) {
+      errores.push('El costo de reparación de su vehículo debe ser mayor a $0');
+    }
+
+    if (costoReparacion > 100000) {
+      advertencias.push('⚠️ Monto muy alto ($100,000+). Se requerirá documentación adicional');
+    }
+
+    // Validación cruzada: gravedad vs. monto
+    if (datosAccidente.gravedad === 'Leve' && costoReparacion > 5000) {
+      advertencias.push('⚠️ Monto alto para daño leve. Asegúrese de que la gravedad seleccionada sea correcta');
+    }
+
+    if (datosAccidente.gravedad === 'Moderado' && costoReparacion > 20000) {
+      advertencias.push('⚠️ Monto muy alto para daño moderado. Confirme los datos');
+    }
+
+    if (datosAccidente.gravedad === 'Total' && costoReparacion < 10000) {
+      advertencias.push('⚠️ Para pérdida total, el monto usualmente es mayor');
+    }
+
+    // 4. Validaciones de consistencia lógica
+    if (datosAccidente.hubeLesionados && !datosAccidente.reportePolicial) {
+      advertencias.push('⚠️ Si hubo lesionados, usualmente se requiere reporte policial');
+    }
+
+    if (datosAccidente.otrosVehiculos && !datosAccidente.reportePolicial && montoTotal > 3000) {
+      advertencias.push('⚠️ Para accidentes con otros vehículos y montos altos, es recomendable tener reporte policial');
+    }
+
+    if (datosAccidente.hubeLesionados && gastosMedicos === 0) {
+      advertencias.push('⚠️ Indicó que hubo lesionados pero no especificó gastos médicos');
+    }
+
+    if (datosAccidente.otrosVehiculos && montoTerceros === 0) {
+      advertencias.push('⚠️ Indicó otros vehículos afectados pero no especificó costos de terceros');
+    }
+
+    // 5. Validaciones de archivos
     if (!datosAccidente.fotos || datosAccidente.fotos.length === 0) {
-      alert('❌ Es obligatorio subir al menos una foto');
+      errores.push('Es obligatorio subir al menos una foto del accidente');
+    }
+
+    if (datosAccidente.fotos && datosAccidente.fotos.length < 2 && costoReparacion > 5000) {
+      advertencias.push('⚠️ Para montos altos, se recomienda subir múltiples fotos');
+    }
+
+    // Validar tamaño de archivos
+    const maxSizeBytes = 10 * 1024 * 1024; // 10MB
+    datosAccidente.fotos?.forEach((foto, index) => {
+      if (foto.size && foto.size > maxSizeBytes) {
+        errores.push(`La foto ${index + 1} excede el tamaño máximo de 10MB`);
+      }
+    });
+
+    datosAccidente.documentos?.forEach((doc, index) => {
+      if (doc.size && doc.size > maxSizeBytes) {
+        errores.push(`El documento ${index + 1} excede el tamaño máximo de 10MB`);
+      }
+    });
+
+    // 6. Validaciones de texto
+    if (datosAccidente.ubicacion && datosAccidente.ubicacion.trim().length < 10) {
+      errores.push('La ubicación debe ser más específica (mínimo 10 caracteres)');
+    }
+
+    if (datosAccidente.nombreConductor && datosAccidente.nombreConductor.trim().length < 3) {
+      errores.push('El nombre del conductor debe tener al menos 3 caracteres');
+    }
+
+    // 7. Validación de caracteres especiales y formato
+    const formatoNombre = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+    if (datosAccidente.nombreConductor && !formatoNombre.test(datosAccidente.nombreConductor)) {
+      errores.push('El nombre del conductor solo puede contener letras y espacios');
+    }
+
+    return { errores, advertencias, montoTotal };
+  };
+
+  const handleSubmit = () => {
+    // Ejecutar validaciones completas
+    const { errores, advertencias, montoTotal } = validarDatosCompletos();
+
+    // Si hay errores críticos, no continuar
+    if (errores.length > 0) {
+      const mensajeError = '❌ Corrija los siguientes errores:\n\n' + errores.map(e => `• ${e}`).join('\n');
+      alert(mensajeError);
       return;
     }
 
-    // Crear objeto completo del accidente
+    // Si hay advertencias, pedir confirmación
+    if (advertencias.length > 0) {
+      const mensajeAdvertencia = '⚠️ Advertencias detectadas:\n\n' + 
+        advertencias.map(a => `• ${a}`).join('\n') + 
+        '\n\n¿Desea continuar de todos modos?';
+      
+      if (!window.confirm(mensajeAdvertencia)) {
+        return;
+      }
+    }
+
+    // Validación final antes de envío
+    if (montoTotal > 50000) {
+      const confirmarMontoAlto = window.confirm(
+        `⚠️ ATENCIÓN: Monto total muy alto ($${montoTotal.toLocaleString()})\n\n` +
+        'Los reclamos por montos superiores a $50,000 requieren:\n' +
+        '• Investigación adicional\n' +
+        '• Documentación completa\n' +
+        '• Posible inspección en sitio\n\n' +
+        '¿Confirma que todos los datos son correctos?'
+      );
+      
+      if (!confirmarMontoAlto) {
+        return;
+      }
+    }
+
+    // Crear objeto completo del accidente con validaciones aprobadas
     const accidenteCompleto = {
       // Datos de la póliza
       poliza: polizaSeleccionada,
-      // Datos del accidente
+      // Datos del accidente validados
       ...datosAccidente,
-      // Metadatos
+      // Metadatos del sistema
       fechaReporte: new Date().toISOString(),
       clienteId: currentUser?.id,
-      estado: 'Pendiente'
+      estado: 'Reportado',
+      montoSolicitado: montoTotal,
+      validacionesAprobadas: {
+        erroresResueltos: errores.length === 0,
+        advertenciasAceptadas: advertencias.length > 0,
+        fechaValidacion: new Date().toISOString(),
+        validadoPor: currentUser?.name || 'Sistema'
+      }
     };
 
-    onSubmit(accidenteCompleto);
+    // Mostrar resumen final
+    const resumenFinal = `✅ ACCIDENTE LISTO PARA ENVIAR\n\n` +
+      `📍 Ubicación: ${datosAccidente.ubicacion}\n` +
+      `📅 Fecha: ${new Date(datosAccidente.fechaHora).toLocaleString('es-ES')}\n` +
+      `🚗 Vehículo: ${polizaSeleccionada.vehiculo} (${polizaSeleccionada.placa})\n` +
+      `⚠️ Gravedad: ${datosAccidente.gravedad}\n` +
+      `💰 Monto total: $${montoTotal.toLocaleString()}\n` +
+      `📸 Fotos: ${datosAccidente.fotos.length}\n` +
+      `📄 Documentos: ${datosAccidente.documentos.length}\n\n` +
+      `¿Confirma el envío del reporte?`;
+
+    if (window.confirm(resumenFinal)) {
+      onSubmit(accidenteCompleto);
+    }
   };
 
   return (
@@ -446,7 +687,7 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
               </div>
             </div>
 
-            {/* Nuevos campos del accidente */}
+            {/* Nuevos campos del accidente con validaciones mejoradas */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -455,10 +696,21 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
                 <input
                   type="datetime-local"
                   value={datosAccidente.fechaHora}
-                  onChange={(e) => setDatosAccidente(prev => ({ ...prev, fechaHora: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onChange={(e) => handleDatosChange('fechaHora', e.target.value)}
+                  max={new Date().toISOString().slice(0, 16)} // No permitir fechas futuras
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
+                    erroresEnTiempoReal.some(e => e.includes('fecha')) 
+                      ? 'border-red-300 focus:ring-red-500' 
+                      : 'border-gray-300 focus:ring-blue-500'
+                  }`}
                   required
                 />
+                {erroresEnTiempoReal.filter(e => e.includes('fecha')).map((error, i) => (
+                  <p key={i} className="text-red-500 text-xs mt-1">❌ {error}</p>
+                ))}
+                {advertenciasEnTiempoReal.filter(a => a.includes('30 días')).map((adv, i) => (
+                  <p key={i} className="text-amber-500 text-xs mt-1">⚠️ {adv}</p>
+                ))}
               </div>
 
               <div>
@@ -468,11 +720,23 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
                 <input
                   type="text"
                   value={datosAccidente.ubicacion}
-                  onChange={(e) => setDatosAccidente(prev => ({ ...prev, ubicacion: e.target.value }))}
-                  placeholder="Calle, avenida, intersección exacta"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onChange={(e) => handleDatosChange('ubicacion', e.target.value)}
+                  placeholder="Ej: Av. Central con Calle 5, frente al Banco Nacional"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
+                    erroresEnTiempoReal.some(e => e.includes('Ubicación')) 
+                      ? 'border-red-300 focus:ring-red-500' 
+                      : 'border-gray-300 focus:ring-blue-500'
+                  }`}
                   required
                 />
+                <div className="flex justify-between items-center mt-1">
+                  {erroresEnTiempoReal.filter(e => e.includes('Ubicación')).map((error, i) => (
+                    <p key={i} className="text-red-500 text-xs">❌ {error}</p>
+                  ))}
+                  <p className="text-gray-400 text-xs">
+                    {datosAccidente.ubicacion?.length || 0}/100 caracteres
+                  </p>
+                </div>
               </div>
 
               <div>
@@ -482,11 +746,18 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
                 <input
                   type="text"
                   value={datosAccidente.nombreConductor}
-                  onChange={(e) => setDatosAccidente(prev => ({ ...prev, nombreConductor: e.target.value }))}
+                  onChange={(e) => handleDatosChange('nombreConductor', e.target.value)}
                   placeholder="Nombre completo del conductor"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
+                    erroresEnTiempoReal.some(e => e.includes('Nombre')) 
+                      ? 'border-red-300 focus:ring-red-500' 
+                      : 'border-gray-300 focus:ring-blue-500'
+                  }`}
                   required
                 />
+                {erroresEnTiempoReal.filter(e => e.includes('Nombre')).map((error, i) => (
+                  <p key={i} className="text-red-500 text-xs mt-1">❌ {error}</p>
+                ))}
               </div>
 
               <div>
@@ -495,16 +766,19 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
                 </label>
                 <select
                   value={datosAccidente.gravedad}
-                  onChange={(e) => setDatosAccidente(prev => ({ ...prev, gravedad: e.target.value }))}
+                  onChange={(e) => handleDatosChange('gravedad', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 >
                   <option value="">Seleccione la gravedad</option>
-                  <option value="Leve">Leve</option>
-                  <option value="Moderado">Moderado</option>
-                  <option value="Grave">Grave</option>
-                  <option value="Total">Total</option>
+                  <option value="Leve">Leve (rayones, abolladuras menores)</option>
+                  <option value="Moderado">Moderado (daños visibles pero reparables)</option>
+                  <option value="Grave">Grave (daños estructurales importantes)</option>
+                  <option value="Total">Total (pérdida total del vehículo)</option>
                 </select>
+                {advertenciasEnTiempoReal.filter(a => a.includes('daño')).map((adv, i) => (
+                  <p key={i} className="text-amber-500 text-xs mt-1">⚠️ {adv}</p>
+                ))}
               </div>
             </div>
 
@@ -548,12 +822,36 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
               </label>
               <textarea
                 value={datosAccidente.descripcion}
-                onChange={(e) => setDatosAccidente(prev => ({ ...prev, descripcion: e.target.value }))}
-                placeholder="Describa cómo ocurrió el accidente, daños observados, condiciones del clima, etc."
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                onChange={(e) => handleDatosChange('descripcion', e.target.value)}
+                placeholder="Describa DETALLADAMENTE cómo ocurrió el accidente:
+• ¿Cómo sucedió? (ej: iba por la calle X cuando un carro se pasó la luz roja)
+• ¿Cuáles son los daños visibles? (ej: parachoques delantero roto, luz izquierda quebrada)
+• ¿Condiciones del clima/carretera? (ej: llovía, carretera mojada)
+• ¿Velocidad aproximada? (ej: iba a unos 40 km/h)
+• ¿Otros detalles importantes?"
+                rows={6}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent resize-none ${
+                  erroresEnTiempoReal.some(e => e.includes('Descripción')) 
+                    ? 'border-red-300 focus:ring-red-500' 
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
                 required
               />
+              <div className="flex justify-between items-center mt-1">
+                <div>
+                  {erroresEnTiempoReal.filter(e => e.includes('Descripción')).map((error, i) => (
+                    <p key={i} className="text-red-500 text-xs">❌ {error}</p>
+                  ))}
+                  {datosAccidente.descripcion && datosAccidente.descripcion.length >= 20 && (
+                    <p className="text-green-500 text-xs">✅ Descripción adecuada</p>
+                  )}
+                </div>
+                <p className={`text-xs ${
+                  datosAccidente.descripcion?.length >= 20 ? 'text-gray-400' : 'text-red-400'
+                }`}>
+                  {datosAccidente.descripcion?.length || 0}/500 caracteres (mín: 20)
+                </p>
+              </div>
             </div>
 
             {/* Subida de fotos obligatorias */}
@@ -668,7 +966,7 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
                 )}
               </div>
 
-              {/* Sección financiera */}
+              {/* Sección financiera con validaciones mejoradas */}
               <div className="border-t border-gray-200 pt-6">
                 <h4 className="font-medium text-gray-900 mb-4 flex items-center">
                   💰 Desglose de Costos del Reclamo
@@ -687,15 +985,30 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
                       <input
                         type="number"
                         value={datosAccidente.costoEstimadoReparacion}
-                        onChange={(e) => setDatosAccidente(prev => ({ ...prev, costoEstimadoReparacion: e.target.value }))}
+                        onChange={(e) => handleDatosChange('costoEstimadoReparacion', e.target.value)}
                         placeholder="0.00"
-                        className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className={`w-full pl-8 pr-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
+                          advertenciasEnTiempoReal.some(a => a.includes('Monto')) 
+                            ? 'border-amber-300 focus:ring-amber-500' 
+                            : 'border-gray-300 focus:ring-blue-500'
+                        }`}
                         min="0"
+                        max="200000"
                         step="0.01"
                         required
                       />
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">¿Cuánto cuesta reparar SU vehículo? (cotizaciones, estimación propia)</p>
+                    <div className="mt-1">
+                      <p className="text-xs text-gray-500">
+                        ¿Cuánto cuesta reparar SU vehículo? (cotizaciones, estimación propia)
+                      </p>
+                      {advertenciasEnTiempoReal.filter(a => a.includes('Monto alto')).map((adv, i) => (
+                        <p key={i} className="text-amber-500 text-xs mt-1">⚠️ {adv}</p>
+                      ))}
+                      {advertenciasEnTiempoReal.filter(a => a.includes('documentación adicional')).map((adv, i) => (
+                        <p key={i} className="text-amber-600 text-xs mt-1 font-medium">⚠️ {adv}</p>
+                      ))}
+                    </div>
                   </div>
 
                   {datosAccidente.otrosVehiculos && (
@@ -708,10 +1021,11 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
                         <input
                           type="number"
                           value={datosAccidente.montoTerceros}
-                          onChange={(e) => setDatosAccidente(prev => ({ ...prev, montoTerceros: e.target.value }))}
+                          onChange={(e) => handleDatosChange('montoTerceros', e.target.value)}
                           placeholder="0.00"
                           className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           min="0"
+                          max="500000"
                           step="0.01"
                         />
                       </div>
@@ -729,10 +1043,11 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
                         <input
                           type="number"
                           value={datosAccidente.gastosMedicos}
-                          onChange={(e) => setDatosAccidente(prev => ({ ...prev, gastosMedicos: e.target.value }))}
+                          onChange={(e) => handleDatosChange('gastosMedicos', e.target.value)}
                           placeholder="0.00"
                           className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           min="0"
+                          max="100000"
                           step="0.01"
                         />
                       </div>
@@ -741,11 +1056,29 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
                   )}
                 </div>
 
-                {/* Campo para calcular el monto total automáticamente */}
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                {/* Campo para calcular el monto total automáticamente con validaciones */}
+                <div className={`mt-6 p-4 rounded-lg border-l-4 ${
+                  (() => {
+                    const total = (parseFloat(datosAccidente.costoEstimadoReparacion) || 0) + 
+                                 (parseFloat(datosAccidente.montoTerceros) || 0) + 
+                                 (parseFloat(datosAccidente.gastosMedicos) || 0);
+                    return total > 50000 ? 'bg-red-50 border-red-400' : 
+                           total > 20000 ? 'bg-amber-50 border-amber-400' : 
+                           'bg-blue-50 border-blue-400';
+                  })()
+                }`}>
                   <div className="flex justify-between items-center">
                     <span className="font-medium text-gray-700">💰 TOTAL que solicito a la aseguradora:</span>
-                    <span className="text-2xl font-bold text-blue-600">
+                    <span className={`text-2xl font-bold ${
+                      (() => {
+                        const total = (parseFloat(datosAccidente.costoEstimadoReparacion) || 0) + 
+                                     (parseFloat(datosAccidente.montoTerceros) || 0) + 
+                                     (parseFloat(datosAccidente.gastosMedicos) || 0);
+                        return total > 50000 ? 'text-red-600' : 
+                               total > 20000 ? 'text-amber-600' : 
+                               'text-blue-600';
+                      })()
+                    }`}>
                       ${(() => {
                         const reparacionMia = parseFloat(datosAccidente.costoEstimadoReparacion) || 0;
                         const reparacionTerceros = parseFloat(datosAccidente.montoTerceros) || 0;
@@ -761,9 +1094,31 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
                       })()}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-600 mt-2">
-                    Este total se calcula automáticamente sumando todos los costos especificados arriba.
-                  </p>
+                  <div className="mt-2">
+                    <p className="text-xs text-gray-600">
+                      Este total se calcula automáticamente sumando todos los costos especificados arriba.
+                    </p>
+                    {(() => {
+                      const total = (parseFloat(datosAccidente.costoEstimadoReparacion) || 0) + 
+                                   (parseFloat(datosAccidente.montoTerceros) || 0) + 
+                                   (parseFloat(datosAccidente.gastosMedicos) || 0);
+                      if (total > 50000) {
+                        return (
+                          <p className="text-red-600 text-xs font-medium mt-1">
+                            ⚠️ MONTO ALTO: Requerirá investigación adicional y documentación completa
+                          </p>
+                        );
+                      }
+                      if (total > 20000) {
+                        return (
+                          <p className="text-amber-600 text-xs mt-1">
+                            ⚠️ Monto elevado: Se recomienda documentación de respaldo
+                          </p>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
                 </div>
 
                 <div className="mt-6">
