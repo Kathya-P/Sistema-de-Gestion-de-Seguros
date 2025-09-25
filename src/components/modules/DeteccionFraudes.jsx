@@ -1,22 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Shield, 
   AlertTriangle, 
   Eye, 
   Search, 
-  Filter,
   TrendingUp,
-  Users,
-  FileText,
-  Calendar,
   Clock,
-  CheckCircle,
-  XCircle,
   Flag,
   UserX,
-  BarChart3,
   Download,
-  Plus
+  Plus,
+  BarChart3
 } from 'lucide-react';
 
 const DeteccionFraudes = ({ permissions }) => {
@@ -24,72 +18,12 @@ const DeteccionFraudes = ({ permissions }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRiesgo, setFilterRiesgo] = useState('todos');
   const [filterEstado, setFilterEstado] = useState('todos');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [casosFraude, setCasosFraude] = useState([
-    {
-      id: 1,
-      numeroReclamo: 'REC-001',
-      cliente: 'Carlos Mendoza',
-      tipoFraude: 'Reclamo múltiple',
-      riesgo: 'Alto',
-      estado: 'En investigación',
-      fechaDeteccion: '2024-09-20',
-      descripcion: 'Cliente presentó 3 reclamos similares en 30 días',
-      indicadores: ['Múltiples reclamos', 'Patrones sospechosos', 'Documentación irregular'],
-      investigador: 'Ana García',
-      montoReclamado: 45000,
-      evidencias: ['Historial de reclamos', 'Análisis de patrones', 'Verificación de documentos']
-    },
-    {
-      id: 2,
-      numeroReclamo: 'REC-045',
-      cliente: 'María Rodríguez',
-      tipoFraude: 'Documentación falsa',
-      riesgo: 'Medio',
-      estado: 'Confirmado fraude',
-      fechaDeteccion: '2024-09-18',
-      descripcion: 'Documentos médicos alterados detectados',
-      indicadores: ['Documentación irregular', 'Firmas inconsistentes'],
-      investigador: 'Pedro Vega',
-      montoReclamado: 15000,
-      evidencias: ['Análisis forense de documentos', 'Verificación médica']
-    },
-    {
-      id: 3,
-      numeroReclamo: 'REC-089',
-      cliente: 'Luis Fernández',
-      tipoFraude: 'Exageración de daños',
-      riesgo: 'Alto',
-      estado: 'Falsa alarma',
-      fechaDeteccion: '2024-09-15',
-      descripcion: 'Daños reportados no coinciden con la evidencia física',
-      indicadores: ['Inconsistencias físicas', 'Valoración excesiva'],
-      investigador: 'Carmen López',
-      montoReclamado: 28000,
-      evidencias: ['Peritaje independiente', 'Fotos comparativas', 'Estimaciones de costo']
-    }
-  ]);
+  const [casosFraude, setCasosFraude] = useState([]);
 
-  const [clientesBloqueados, setClientesBloqueados] = useState([
-    {
-      id: 1,
-      nombre: 'Roberto Silva',
-      cedula: '1-1234-5678',
-      motivoBloqueo: 'Fraude confirmado múltiple',
-      fechaBloqueo: '2024-08-15',
-      reclamosAfectados: 4,
-      montoTotal: 85000
-    },
-    {
-      id: 2,
-      nombre: 'Sandra Morales',
-      cedula: '2-9876-5432',
-      motivoBloqueo: 'Documentación falsificada',
-      fechaBloqueo: '2024-07-22',
-      reclamosAfectados: 2,
-      montoTotal: 32000
-    }
-  ]);
+  const [clientesBloqueados, setClientesBloqueados] = useState([]);
 
   const filteredCasos = casosFraude.filter(caso => {
     const matchesSearch = caso.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -100,14 +34,56 @@ const DeteccionFraudes = ({ permissions }) => {
     return matchesSearch && matchesRiesgo && matchesEstado;
   });
 
-  const metricas = {
-    casosActivos: casosFraude.filter(c => c.estado === 'En investigación').length,
-    fraudesConfirmados: casosFraude.filter(c => c.estado === 'Confirmado fraude').length,
-    clientesBloqueados: clientesBloqueados.length,
-    montoPrevenido: casosFraude
-      .filter(c => c.estado === 'Confirmado fraude')
-      .reduce((sum, c) => sum + c.montoReclamado, 0)
-  };
+  useEffect(() => {
+    const cargarDatos = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Reemplazar con tus endpoints reales de API
+        const responsesCasos = await fetch('/api/fraudes/casos');
+        const responsesBlocked = await fetch('/api/fraudes/clientesBloqueados');
+        
+        if (!responsesCasos.ok || !responsesBlocked.ok) {
+          throw new Error('Error al cargar los datos');
+        }
+        
+        const casosFraudeData = await responsesCasos.json();
+        const clientesBloqueadosData = await responsesBlocked.json();
+        
+        setCasosFraude(casosFraudeData);
+        setClientesBloqueados(clientesBloqueadosData);
+        
+        // Calcular métricas
+        const casosActivos = casosFraudeData.filter(caso => caso.estado === 'En investigación').length;
+        const fraudesConfirmados = casosFraudeData.filter(caso => caso.estado === 'Confirmado fraude').length;
+        const montoPrevenido = casosFraudeData
+          .filter(caso => caso.estado === 'Confirmado fraude')
+          .reduce((total, caso) => total + (caso.montoReclamado || 0), 0);
+
+        setMetricas({
+          casosActivos,
+          fraudesConfirmados,
+          clientesBloqueados: clientesBloqueadosData.length,
+          montoPrevenido
+        });
+      } catch (error) {
+        setError('Error al cargar los datos: ' + error.message);
+        console.error('Error al cargar datos de fraude:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    cargarDatos();
+  }, []);
+
+  const [metricas, setMetricas] = useState({
+    casosActivos: 0,
+    fraudesConfirmados: 0,
+    clientesBloqueados: 0,
+    montoPrevenido: 0
+  });
 
   return (
     <div className="space-y-6">
