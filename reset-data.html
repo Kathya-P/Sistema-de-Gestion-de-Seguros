@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reset Data - SecureTech</title>
+</head>
+<body>
+    <h1>Reset SecureTech Data</h1>
+    <button onclick="resetData()">🗑️ Limpiar todos los datos</button>
+    <p id="status"></p>
+
+    <script>
+        function resetData() {
+            // Limpiar localStorage
+            localStorage.removeItem('seguros_users_data');
+            localStorage.removeItem('seguros_session_data');
+            localStorage.removeItem('polizas');
+            localStorage.removeItem('accidents');
+            localStorage.removeItem('reclamos');
+            
+            document.getElementById('status').innerHTML = '✅ Datos limpiados correctamente. Ahora puedes cerrar esta ventana y probar el registro de nuevo usuario.';
+        }
+    </script>
+</body>
+</html>

@@ -76,11 +76,26 @@ const SistemaSeguroVehicular = () => {
     
     // Función para contar pólizas activas de un usuario
     const contarPolizasActivas = (userName) => {
-      return polizasGuardadas.filter(poliza => 
-        poliza.cliente && 
-        poliza.cliente.toLowerCase() === userName.toLowerCase() && 
-        poliza.estado === 'Aprobada'
-      ).length;
+      console.log(`🔍 Contando pólizas para usuario: ${userName}`);
+      console.log('📋 Pólizas disponibles:', polizasGuardadas);
+      
+      const polizasDelUsuario = polizasGuardadas.filter(poliza => {
+        // Verificar si la póliza tiene estado aprobado
+        if (poliza.estado !== 'Aprobada') return false;
+        
+        // Verificar diferentes campos donde puede estar el nombre del cliente
+        const clienteEnPoliza = poliza.cliente || poliza.titular || poliza.clienteName;
+        
+        if (!clienteEnPoliza) return false;
+        
+        // Comparar nombres (insensible a mayúsculas)
+        const coincide = clienteEnPoliza.toLowerCase() === userName.toLowerCase();
+        console.log(`   - Póliza ${poliza.numeroPoliza}: cliente="${clienteEnPoliza}", estado="${poliza.estado}", coincide=${coincide}`);
+        return coincide;
+      });
+      
+      console.log(`✅ Total pólizas activas para ${userName}: ${polizasDelUsuario.length}`);
+      return polizasDelUsuario.length;
     };
 
     // Procesar usuarios y sus pólizas
@@ -122,10 +137,11 @@ const SistemaSeguroVehicular = () => {
     const clientesRegistrados = registeredUsers
       .filter(user => user.rol !== 'admin' && user.role !== 'Administrador')
       .map(user => {
-        const polizasActivas = polizasGuardadas.filter(p => 
-          p.cliente && p.cliente.toLowerCase() === user.name.toLowerCase() && 
-          p.estado === 'Aprobada'
-        ).length;
+        const polizasActivas = polizasGuardadas.filter(p => {
+          if (p.estado !== 'Aprobada') return false;
+          const clienteEnPoliza = p.cliente || p.titular || p.clienteName;
+          return clienteEnPoliza && clienteEnPoliza.toLowerCase() === user.name.toLowerCase();
+        }).length;
         
         return {
           id: user.id,
@@ -170,7 +186,11 @@ const SistemaSeguroVehicular = () => {
           email: u.email,
           numeroDocumento: u.username,
           telefono: u.phone || '',
-          polizasActivas: polizas.filter(p => p.cliente === u.name && p.estado === 'Aprobada').length,
+          polizasActivas: polizas.filter(p => {
+            if (p.estado !== 'Aprobada') return false;
+            const clienteEnPoliza = p.cliente || p.titular || p.clienteName;
+            return clienteEnPoliza && clienteEnPoliza.toLowerCase() === u.name.toLowerCase();
+          }).length,
           fechaRegistro: u.createdAt
         }));
       setClientes(clientesRegistrados);
@@ -188,10 +208,11 @@ const SistemaSeguroVehicular = () => {
       const clientesRegistrados = registeredUsers
         .filter(user => user.rol !== 'admin' && user.role !== 'Administrador')
         .map(user => {
-          const polizasActivas = polizas.filter(p => 
-            (p.cliente && p.cliente.toLowerCase() === user.name.toLowerCase()) && 
-            p.estado === 'Aprobada'
-          ).length;
+          const polizasActivas = polizas.filter(p => {
+            if (p.estado !== 'Aprobada') return false;
+            const clienteEnPoliza = p.cliente || p.titular || p.clienteName;
+            return clienteEnPoliza && clienteEnPoliza.toLowerCase() === user.name.toLowerCase();
+          }).length;
           
           return {
             id: user.id,
