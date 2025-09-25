@@ -347,11 +347,17 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
             fotos: datosAccidente.fotos,
             documentos: datosAccidente.documentos,
             tipoReclamo: datosAccidente.tipoReclamo,
+            // Datos financieros
+            montoSolicitado: parseFloat(datosAccidente.montoSolicitado) || 0,
+            costoEstimadoReparacion: parseFloat(datosAccidente.costoEstimadoReparacion) || 0,
+            gastosMedicos: parseFloat(datosAccidente.gastosMedicos) || 0,
+            montoTerceros: parseFloat(datosAccidente.montoTerceros) || 0,
+            observacionesFinancieras: datosAccidente.observacionesFinancieras || '',
             // Metadatos
             estado: 'Reportado',
             fechaReporte: new Date().toISOString().split('T')[0],
             fechaAsignacion: null,
-            montoEstimado: 0,
+            montoEstimado: parseFloat(datosAccidente.montoSolicitado) || 0,
             ajustador: null,
             clienteId: currentUser?.id
           };
@@ -632,6 +638,9 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Gravedad
                       </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Monto
+                      </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Acciones
                       </th>
@@ -700,6 +709,16 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
                           }`}>
                             {accidente.gravedad || 'No especificada'}
                           </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-green-600">
+                              ${(accidente.montoSolicitado || 0).toLocaleString()}
+                            </span>
+                            {accidente.montoSolicitado > 20000 && (
+                              <span className="text-xs text-red-500">⚠️ Alto</span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex justify-end items-center space-x-2">
@@ -910,6 +929,83 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Información Financiera */}
+            <div className="mt-6 border-t border-gray-200 pt-6">
+              <h4 className="font-medium text-gray-900 mb-4 flex items-center">
+                💰 Información Financiera del Reclamo
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600">Monto Solicitado</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    ${accidenteSeleccionado.montoSolicitado?.toLocaleString() || '0'}
+                  </p>
+                </div>
+                
+                {accidenteSeleccionado.costoEstimadoReparacion > 0 && (
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-600">Costo Est. Reparación</p>
+                    <p className="text-xl font-semibold text-gray-700">
+                      ${accidenteSeleccionado.costoEstimadoReparacion?.toLocaleString()}
+                    </p>
+                  </div>
+                )}
+                
+                {accidenteSeleccionado.gastosMedicos > 0 && (
+                  <div className="bg-red-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-600">Gastos Médicos</p>
+                    <p className="text-xl font-semibold text-red-600">
+                      ${accidenteSeleccionado.gastosMedicos?.toLocaleString()}
+                    </p>
+                  </div>
+                )}
+                
+                {accidenteSeleccionado.montoTerceros > 0 && (
+                  <div className="bg-orange-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-600">Daños a Terceros</p>
+                    <p className="text-xl font-semibold text-orange-600">
+                      ${accidenteSeleccionado.montoTerceros?.toLocaleString()}
+                    </p>
+                  </div>
+                )}
+              </div>
+              
+              {accidenteSeleccionado.observacionesFinancieras && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm font-medium text-gray-700 mb-2">Observaciones Financieras:</p>
+                  <p className="text-sm text-gray-600">{accidenteSeleccionado.observacionesFinancieras}</p>
+                </div>
+              )}
+              
+              {/* Análisis automático para admins */}
+              {permissions?.isAdmin && (
+                <div className="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
+                  <p className="text-sm font-medium text-yellow-800 mb-2">🔍 Análisis Automático:</p>
+                  <div className="space-y-1 text-xs text-yellow-700">
+                    {(() => {
+                      const monto = accidenteSeleccionado.montoSolicitado || 0;
+                      const gravedad = accidenteSeleccionado.gravedad;
+                      const alerts = [];
+                      
+                      if (gravedad === 'Leve' && monto > 5000) {
+                        alerts.push('⚠️ Monto alto para daño leve');
+                      }
+                      if (gravedad === 'Moderado' && monto > 15000) {
+                        alerts.push('⚠️ Monto alto para daño moderado');
+                      }
+                      if (monto > 50000) {
+                        alerts.push('🚨 Monto muy alto - Revisar cuidadosamente');
+                      }
+                      
+                      return alerts.length > 0 ? alerts.map((alert, i) => (
+                        <p key={i}>{alert}</p>
+                      )) : <p>✅ Montos dentro de rangos normales</p>;
+                    })()}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Comentarios del Admin (admin siempre, cliente solo si fue rechazado) */}

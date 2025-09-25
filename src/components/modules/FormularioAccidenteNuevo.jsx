@@ -57,7 +57,13 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
     tipoReclamo: '',
     gravedad: '',
     fotos: [],
-    documentos: []
+    documentos: [],
+    // Campos financieros
+    montoSolicitado: '',
+    costoEstimadoReparacion: '',
+    gastosMedicos: '',
+    montoTerceros: '',
+    observacionesFinancieras: ''
   });
 
   // Función para validar póliza seleccionada
@@ -225,8 +231,13 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
       return;
     }
 
-    if (!datosAccidente.fechaHora || !datosAccidente.ubicacion || !datosAccidente.descripcion || !datosAccidente.gravedad) {
-      alert('❌ Complete todos los campos requeridos (incluyendo la gravedad del daño)');
+    if (!datosAccidente.fechaHora || !datosAccidente.ubicacion || !datosAccidente.descripcion || !datosAccidente.gravedad || !datosAccidente.costoEstimadoReparacion) {
+      alert('❌ Complete todos los campos requeridos (incluyendo la gravedad del daño y el costo de reparación de SU vehículo)');
+      return;
+    }
+
+    if (parseFloat(datosAccidente.costoEstimadoReparacion) <= 0) {
+      alert('❌ El costo de reparación de su vehículo debe ser mayor a 0');
       return;
     }
 
@@ -610,7 +621,7 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
                   Puede adjuntar documentos como: reporte policial, cotizaciones de reparación, declaraciones de testigos, etc.
                 </p>
                 
-                <div className="flex flex-col sm:flex-row items-start space-y-2 sm:space-y-0 sm:space-x-4">
+                <div className="flex flex-col sm:flex-row items-start space-y-3 sm:space-y-0 sm:space-x-4 mb-4">
                   <input
                     type="file"
                     multiple
@@ -621,12 +632,12 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
                   />
                   <label
                     htmlFor="documentos-upload"
-                    className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 cursor-pointer"
+                    className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 cursor-pointer transition-colors"
                   >
                     <Upload className="w-4 h-4 mr-2" />
                     Subir Documentos
                   </label>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-gray-500 self-center">
                     Formatos: PDF, DOC, DOCX, TXT, PNG, JPG (Máx. 10MB por archivo)
                   </span>
                 </div>
@@ -655,6 +666,125 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
                     ))}
                   </div>
                 )}
+              </div>
+
+              {/* Sección financiera */}
+              <div className="border-t border-gray-200 pt-6">
+                <h4 className="font-medium text-gray-900 mb-4 flex items-center">
+                  💰 Desglose de Costos del Reclamo
+                </h4>
+                <p className="text-sm text-gray-600 mb-6">
+                  Especifique cuánto necesita para cada tipo de daño. Esto nos ayuda a procesar su reclamo más eficientemente.
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      💸 Costo de Reparación de MI Vehículo *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                      <input
+                        type="number"
+                        value={datosAccidente.costoEstimadoReparacion}
+                        onChange={(e) => setDatosAccidente(prev => ({ ...prev, costoEstimadoReparacion: e.target.value }))}
+                        placeholder="0.00"
+                        className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        min="0"
+                        step="0.01"
+                        required
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">¿Cuánto cuesta reparar SU vehículo? (cotizaciones, estimación propia)</p>
+                  </div>
+
+                  {datosAccidente.otrosVehiculos && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        🚗 Costo de Reparación de Vehículos TERCEROS
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                        <input
+                          type="number"
+                          value={datosAccidente.montoTerceros}
+                          onChange={(e) => setDatosAccidente(prev => ({ ...prev, montoTerceros: e.target.value }))}
+                          placeholder="0.00"
+                          className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          min="0"
+                          step="0.01"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">¿Cuánto costará reparar los OTROS vehículos que dañé?</p>
+                    </div>
+                  )}
+
+                  {datosAccidente.hubeLesionados && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        🏥 Gastos Médicos (Míos o de Otros)
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                        <input
+                          type="number"
+                          value={datosAccidente.gastosMedicos}
+                          onChange={(e) => setDatosAccidente(prev => ({ ...prev, gastosMedicos: e.target.value }))}
+                          placeholder="0.00"
+                          className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          min="0"
+                          step="0.01"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Ambulancia, hospital, medicinas, consultas médicas</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Campo para calcular el monto total automáticamente */}
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-gray-700">💰 TOTAL que solicito a la aseguradora:</span>
+                    <span className="text-2xl font-bold text-blue-600">
+                      ${(() => {
+                        const reparacionMia = parseFloat(datosAccidente.costoEstimadoReparacion) || 0;
+                        const reparacionTerceros = parseFloat(datosAccidente.montoTerceros) || 0;
+                        const medicos = parseFloat(datosAccidente.gastosMedicos) || 0;
+                        const total = reparacionMia + reparacionTerceros + medicos;
+                        // Actualizar el monto solicitado automáticamente
+                        if (total !== (parseFloat(datosAccidente.montoSolicitado) || 0)) {
+                          setTimeout(() => {
+                            setDatosAccidente(prev => ({ ...prev, montoSolicitado: total.toString() }));
+                          }, 0);
+                        }
+                        return total.toLocaleString();
+                      })()}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-2">
+                    Este total se calcula automáticamente sumando todos los costos especificados arriba.
+                  </p>
+                </div>
+
+                <div className="mt-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    📋 Detalles Adicionales de los Costos (Opcional)
+                  </label>
+                  <textarea
+                    value={datosAccidente.observacionesFinancieras}
+                    onChange={(e) => setDatosAccidente(prev => ({ ...prev, observacionesFinancieras: e.target.value }))}
+                    placeholder="Ejemplo: 
+• Ya tengo 2 cotizaciones del taller Juan Pérez ($5,000) y AutoFix ($4,800)
+• Los gastos médicos incluyen radiografías y consulta traumatólogo 
+• El otro carro (Honda azul) tiene el parachoques muy dañado
+• Tengo facturas/recibos de algunos gastos"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows={4}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    💡 Ayúdanos con detalles específicos: talleres cotizados, facturas que tiene, etc.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
