@@ -228,11 +228,8 @@ export const usePermissions = () => {
     canInvestigateFraudes: currentUser && (userRole === 'admin'), // Solo admin investiga fraudes
     canMarkFraudulent: currentUser && (userRole === 'admin'), // Solo admin marca como fraudulento
     canBlockClients: currentUser && (userRole === 'admin'), // Solo admin bloquea clientes
-    canGenerateFraudeReports: currentUser && (userRole === 'admin'), // Solo admin genera reportes de fraude
     canViewAllFraudeCases: currentUser && (userRole === 'admin'), // Solo admin ve todos los casos
     canAssignFraudeInvestigators: currentUser && (userRole === 'admin'), // Solo admin asigna investigadores
-    
-    canViewReports: currentUser && (userRole === 'admin'), // Solo admin
     
     canProcessCotizaciones: currentUser && (userRole === 'admin'), // Admin puede aprobar/rechazar
     canRequestCotizaciones: currentUser && (userRole === 'cliente'), // Clientes pueden solicitar cotizaciones

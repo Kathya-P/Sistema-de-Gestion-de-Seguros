@@ -11,7 +11,6 @@ import Polizas from './components/modules/Polizas';
 import Clientes from './components/modules/Clientes';
 import DeteccionFraudes from './components/modules/DeteccionFraudes';
 import RevisarAccidentes from './components/modules/RevisarAccidentes';
-import Reportes from './components/modules/Reportes';
 import GuestBanner from './components/auth/GuestBanner';
 
 // Importar datos y utilidades
@@ -353,8 +352,6 @@ const SistemaSeguroVehicular = () => {
         return <DeteccionFraudes permissions={permissions} />;
       case 'accidentes':
         return <RevisarAccidentes permissions={permissions} polizas={polizas} setActiveModule={handleModuleChange} />;
-      case 'reportes':
-        return <Reportes permissions={permissions} />;
       default:
         return <Inicio polizas={polizas} clientes={clientes} setActiveModule={handleModuleChange} permissions={permissions} currentUser={currentUser} />;
     }

@@ -5,8 +5,7 @@ import {
   Calculator, 
   AlertTriangle, 
   Shield, 
-  Car, 
-  BarChart3 
+  Car 
 } from 'lucide-react';
 
 // Usuarios para autenticación
@@ -41,8 +40,7 @@ export const allMenuItems = [
   { id: 'clientes', label: 'Propietarios', icon: Users, roles: ['admin'] },
   { id: 'cotizaciones', label: 'Cotizar Seguro', icon: Calculator, roles: ['admin', 'agente', 'cliente'] },
   { id: 'accidentes', label: 'Gestión de Accidentes', icon: Car, roles: ['admin', 'agente', 'cliente'] },
-  { id: 'fraudes', label: 'Fraudes Vehiculares', icon: Shield, roles: ['admin'] },
-  { id: 'reportes', label: 'Reportes', icon: BarChart3, roles: ['admin'] }
+  { id: 'fraudes', label: 'Fraudes Vehiculares', icon: Shield, roles: ['admin'] }
 ];
 
 // Función para obtener menú filtrado por rol

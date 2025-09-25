@@ -14,7 +14,8 @@ import {
   Mail,
   Phone,
   MapPin,
-  Clock
+  Clock,
+  BarChart3
 } from 'lucide-react';
 
 const Inicio = ({ 
@@ -34,6 +35,8 @@ const Inicio = ({
         return permissions.canViewClients;
       case 'fraudes':
         return permissions.canViewFraudes;
+      case 'reportes':
+        return permissions.canViewReports;
       default:
         return true;
     }
@@ -133,6 +136,16 @@ const Inicio = ({
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Revisar Accidentes</h3>
             <p className="text-gray-600 text-sm">Supervisar reportes</p>
+          </div>
+        </div>
+
+        <div onClick={() => setActiveModule('reportes')} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-lg transition-all duration-300">
+          <div className="text-center">
+            <div className="p-4 rounded-xl mb-4 mx-auto w-fit" style={{backgroundColor: '#f0f9f0'}}>
+              <BarChart3 className="w-8 h-8" style={{color: '#2d5016'}} />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Reportes</h3>
+            <p className="text-gray-600 text-sm">Análisis y métricas</p>
           </div>
         </div>
       </div>
