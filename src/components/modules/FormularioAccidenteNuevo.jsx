@@ -18,6 +18,32 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
   const [validacionCompleta, setValidacionCompleta] = useState(false);
   const [tipoReclamoValido, setTipoReclamoValido] = useState(false);
   const [mensajesValidacion, setMensajesValidacion] = useState([]);
+
+  // Función para obtener URL segura de fotos
+  const getSafeImageUrl = (foto) => {
+    try {
+      // Si es un objeto con data base64, usar esa data
+      if (foto && foto.data && typeof foto.data === 'string' && foto.data.startsWith('data:')) {
+        return foto.data;
+      }
+      // Si es un File válido, crear ObjectURL
+      if (foto instanceof File || foto instanceof Blob) {
+        return URL.createObjectURL(foto);
+      }
+      // Si ya es una URL (string), devolverla directamente
+      if (typeof foto === 'string' && (foto.startsWith('http') || foto.startsWith('data:'))) {
+        return foto;
+      }
+      // Si tiene una propiedad url, usarla
+      if (foto && foto.url) {
+        return foto.url;
+      }
+      return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMiA5TDEzIDEwTDEyIDExTDExIDEwTDEyIDlaIiBmaWxsPSIjOTQ5Nzk3Ii8+Cjx0ZXh0IHg9IjEyIiB5PSIxNiIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjgiIGZpbGw9IiM5NDk3OTciIHRleHQtYW5jaG9yPSJtaWRkbGUiPkltYWdlbjwvdGV4dD4KPHN2Zz4K';
+    } catch (error) {
+      console.warn('Error processing image:', error);
+      return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMiA5TDEzIDEwTDEyIDExTDExIDEwTDEyIDlaIiBmaWxsPSIjOTQ5Nzk3Ii8+Cjx0ZXh0IHg9IjEyIiB5PSIxNiIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjgiIGZpbGw9IiM5NDk3OTciIHRleHQtYW5jaG9yPSJtaWRkbGUiPkltYWdlbjwvdGV4dD4KPHN2Zz4K';
+    }
+  };
   
   const [datosAccidente, setDatosAccidente] = useState({
     fechaHora: '',
@@ -29,8 +55,9 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
     conductorAsegurado: true,
     nombreConductor: currentUser?.name || '',
     tipoReclamo: '',
-    tipoDano: '',
-    fotos: []
+    gravedad: '',
+    fotos: [],
+    documentos: []
   });
 
   // Función para validar póliza seleccionada
@@ -133,16 +160,61 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
 
   const handleFileUpload = (e) => {
     const files = Array.from(e.target.files);
-    setDatosAccidente(prev => ({
-      ...prev,
-      fotos: [...prev.fotos, ...files]
-    }));
+    
+    // Convertir archivos a base64 para poder guardarlos en localStorage
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const fileData = {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          data: event.target.result // base64
+        };
+        
+        setDatosAccidente(prev => ({
+          ...prev,
+          fotos: [...prev.fotos, fileData]
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const removeFile = (index) => {
     setDatosAccidente(prev => ({
       ...prev,
       fotos: prev.fotos.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleDocumentUpload = (e) => {
+    const files = Array.from(e.target.files);
+    
+    // Convertir documentos a base64 para poder guardarlos en localStorage
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const fileData = {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          data: event.target.result // base64
+        };
+        
+        setDatosAccidente(prev => ({
+          ...prev,
+          documentos: [...prev.documentos, fileData]
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeDocument = (index) => {
+    setDatosAccidente(prev => ({
+      ...prev,
+      documentos: prev.documentos.filter((_, i) => i !== index)
     }));
   };
 
@@ -153,8 +225,8 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
       return;
     }
 
-    if (!datosAccidente.fechaHora || !datosAccidente.ubicacion || !datosAccidente.descripcion || !datosAccidente.tipoDano) {
-      alert('❌ Complete todos los campos requeridos (incluyendo el tipo de daño)');
+    if (!datosAccidente.fechaHora || !datosAccidente.ubicacion || !datosAccidente.descripcion || !datosAccidente.gravedad) {
+      alert('❌ Complete todos los campos requeridos (incluyendo la gravedad del daño)');
       return;
     }
 
@@ -408,28 +480,19 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tipo de Daño/Accidente *
+                  Gravedad del Daño *
                 </label>
                 <select
-                  value={datosAccidente.tipoDano}
-                  onChange={(e) => setDatosAccidente(prev => ({ ...prev, tipoDano: e.target.value }))}
+                  value={datosAccidente.gravedad}
+                  onChange={(e) => setDatosAccidente(prev => ({ ...prev, gravedad: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 >
-                  <option value="">Seleccione el tipo de daño</option>
-                  <option value="Colisión frontal">Colisión frontal</option>
-                  <option value="Colisión trasera">Colisión trasera</option>
-                  <option value="Colisión lateral">Colisión lateral</option>
-                  <option value="Volcadura">Volcadura</option>
-                  <option value="Daños por granizo">Daños por granizo</option>
-                  <option value="Daños por inundación">Daños por inundación</option>
-                  <option value="Robo total">Robo total</option>
-                  <option value="Robo parcial">Robo parcial</option>
-                  <option value="Vandalismo">Vandalismo</option>
-                  <option value="Incendio">Incendio</option>
-                  <option value="Cristales rotos">Cristales rotos</option>
-                  <option value="Daños menores">Daños menores</option>
-                  <option value="Otro">Otro</option>
+                  <option value="">Seleccione la gravedad</option>
+                  <option value="Leve">Leve</option>
+                  <option value="Moderado">Moderado</option>
+                  <option value="Grave">Grave</option>
+                  <option value="Total">Total</option>
                 </select>
               </div>
             </div>
@@ -512,24 +575,87 @@ const FormularioAccidenteNuevo = ({ polizas, onSubmit, onCancel, currentUser }) 
               {/* Vista previa de fotos */}
               {datosAccidente.fotos.length > 0 && (
                 <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {datosAccidente.fotos.map((foto, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={URL.createObjectURL(foto)}
-                        alt={`Foto ${index + 1}`}
-                        className="w-full h-24 object-cover rounded-lg border"
-                      />
-                      <button
-                        onClick={() => removeFile(index)}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                      <p className="text-xs text-gray-500 mt-1 truncate">{foto.name}</p>
-                    </div>
-                  ))}
+                  {datosAccidente.fotos.map((foto, index) => {
+                    const imageUrl = getSafeImageUrl(foto);
+                    return (
+                      <div key={index} className="relative">
+                        <img
+                          src={imageUrl}
+                          alt={`Foto ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-lg border"
+                          onError={(e) => {
+                            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMiA5TDEzIDEwTDEyIDExTDExIDEwTDEyIDlaIiBmaWxsPSIjOTQ5Nzk3Ii8+Cjx0ZXh0IHg9IjEyIiB5PSIxNiIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjgiIGZpbGw9IiM5NDk3OTciIHRleHQtYW5jaG9yPSJtaWRkbGUiPkltYWdlbjwvdGV4dD4KPHN2Zz4K';
+                          }}
+                        />
+                        <button
+                          onClick={() => removeFile(index)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                        <p className="text-xs text-gray-500 mt-1 truncate">{foto.name}</p>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
+
+              {/* Sección de documentos adicionales (opcional) */}
+              <div className="border-t border-gray-200 pt-6">
+                <h4 className="font-medium text-gray-900 mb-4 flex items-center">
+                  <FileText className="w-5 h-5 mr-2 text-blue-500" />
+                  Documentos Adicionales (Opcional)
+                </h4>
+                <p className="text-sm text-gray-600 mb-4">
+                  Puede adjuntar documentos como: reporte policial, cotizaciones de reparación, declaraciones de testigos, etc.
+                </p>
+                
+                <div className="flex flex-col sm:flex-row items-start space-y-2 sm:space-y-0 sm:space-x-4">
+                  <input
+                    type="file"
+                    multiple
+                    accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"
+                    onChange={handleDocumentUpload}
+                    className="hidden"
+                    id="documentos-upload"
+                  />
+                  <label
+                    htmlFor="documentos-upload"
+                    className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 cursor-pointer"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Subir Documentos
+                  </label>
+                  <span className="text-xs text-gray-500">
+                    Formatos: PDF, DOC, DOCX, TXT, PNG, JPG (Máx. 10MB por archivo)
+                  </span>
+                </div>
+
+                {/* Vista previa de documentos */}
+                {datosAccidente.documentos.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    {datosAccidente.documentos.map((documento, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                        <div className="flex items-center">
+                          <FileText className="w-5 h-5 text-gray-500 mr-3" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 truncate">{documento.name}</p>
+                            <p className="text-xs text-gray-500">
+                              {(documento.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => removeDocument(index)}
+                          className="w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

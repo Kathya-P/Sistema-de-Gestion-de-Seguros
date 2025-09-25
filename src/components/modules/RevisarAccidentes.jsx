@@ -32,6 +32,33 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
   const [vehiculosAsegurados, setVehiculosAsegurados] = useState([]);
   const [accidentes, setAccidentes] = useState([]);
 
+  // Función para obtener URL segura de fotos
+  const getSafeImageUrl = (foto) => {
+    try {
+      // Si es un objeto con data base64, usar esa data
+      if (foto && foto.data && typeof foto.data === 'string' && foto.data.startsWith('data:')) {
+        return foto.data;
+      }
+      // Si ya es una URL (string), devolverla directamente
+      if (typeof foto === 'string' && (foto.startsWith('http') || foto.startsWith('data:'))) {
+        return foto;
+      }
+      // Si tiene una propiedad url, usarla
+      if (foto && foto.url) {
+        return foto.url;
+      }
+      // Si es un File válido, crear ObjectURL
+      if (foto instanceof File || foto instanceof Blob) {
+        return URL.createObjectURL(foto);
+      }
+      // Si no es válido, retornar placeholder
+      return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMiA5TDEzIDEwTDEyIDExTDExIDEwTDEyIDlaIiBmaWxsPSIjOTQ5Nzk3Ii8+Cjx0ZXh0IHg9IjEyIiB5PSIxNiIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjgiIGZpbGw9IiM5NDk3OTciIHRleHQtYW5jaG9yPSJtaWRkbGUiPkltYWdlbjwvdGV4dD4KPHN2Zz4K';
+    } catch (error) {
+      console.warn('Error processing image:', error);
+      return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMiA5TDEzIDEwTDEyIDExTDExIDEwTDEyIDlaIiBmaWxsPSIjOTQ5Nzk3Ii8+Cjx0ZXh0IHg9IjEyIiB5PSIxNiIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjgiIGZpbGw9IiM5NDk3OTciIHRleHQtYW5jaG9yPSJtaWRkbGUiPkltYWdlbjwvdGV4dD4KPHN2Zz4K';
+    }
+  };
+
   // Cargar datos iniciales
   useEffect(() => {
     console.log('🚗 RevisarAccidentes - Cargando datos iniciales...');
@@ -231,11 +258,12 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
             ubicacion: datosAccidente.ubicacion,
             descripcion: datosAccidente.descripcion,
             nombreConductor: datosAccidente.nombreConductor,
-            tipoDano: datosAccidente.tipoDano,
+            gravedad: datosAccidente.gravedad,
             hubeLesionados: datosAccidente.hubeLesionados,
             otrosVehiculos: datosAccidente.otrosVehiculos,
             reportePolicial: datosAccidente.reportePolicial,
             fotos: datosAccidente.fotos,
+            documentos: datosAccidente.documentos,
             tipoReclamo: datosAccidente.tipoReclamo,
             // Metadatos
             estado: 'Reportado',
@@ -537,7 +565,7 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
                                 {accidente.numeroReporte}
                               </div>
                               <div className="text-sm text-gray-500">
-                                {accidente.tipoDano || accidente.tipoAccidente || 'No especificado'}
+                                {accidente.gravedad ? `Gravedad: ${accidente.gravedad}` : (accidente.tipoAccidente || 'No especificado')}
                               </div>
                             </div>
                           </div>
@@ -667,7 +695,6 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
                     <p><strong>Póliza:</strong> {accidenteSeleccionado.polizaId}</p>
                     <p><strong>Fecha y Hora:</strong> {accidenteSeleccionado.fechaHora || `${accidenteSeleccionado.fecha} ${accidenteSeleccionado.hora}`}</p>
                     <p><strong>Ubicación:</strong> {accidenteSeleccionado.ubicacion}</p>
-                    <p><strong>Tipo de Daño:</strong> {accidenteSeleccionado.tipoDano || accidenteSeleccionado.tipoAccidente || 'No especificado'}</p>
                     <p><strong>Conductor:</strong> {accidenteSeleccionado.nombreConductor || 'No especificado'}</p>
                     <p><strong>Estado:</strong> <span className={`font-medium ${
                       accidenteSeleccionado.estado === 'Reportado' ? 'text-yellow-600' :
@@ -678,8 +705,10 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
                     <p><strong>Gravedad:</strong> <span className={`font-medium ${
                       accidenteSeleccionado.gravedad === 'Leve' ? 'text-green-600' :
                       accidenteSeleccionado.gravedad === 'Moderado' ? 'text-yellow-600' :
-                      'text-red-600'
-                    }`}>{accidenteSeleccionado.gravedad}</span></p>
+                      accidenteSeleccionado.gravedad === 'Grave' ? 'text-orange-600' :
+                      accidenteSeleccionado.gravedad === 'Total' ? 'text-red-600' :
+                      'text-gray-600'
+                    }`}>{accidenteSeleccionado.gravedad || 'No especificada'}</span></p>
                   </div>
                 </div>
                 
@@ -705,16 +734,26 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
                   <h4 className="font-medium text-gray-900 mb-2">Fotos del Accidente</h4>
                   {accidenteSeleccionado.fotos && accidenteSeleccionado.fotos.length > 0 ? (
                     <div className="grid grid-cols-2 gap-2">
-                      {accidenteSeleccionado.fotos.map((foto, index) => (
-                        <div key={index} className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                          <img
-                            src={foto.url || URL.createObjectURL(foto)}
-                            alt={`Foto ${index + 1}`}
-                            className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform"
-                            onClick={() => window.open(foto.url || URL.createObjectURL(foto), '_blank')}
-                          />
-                        </div>
-                      ))}
+                      {accidenteSeleccionado.fotos.map((foto, index) => {
+                        const imageUrl = getSafeImageUrl(foto);
+                        return (
+                          <div key={index} className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                            <img
+                              src={imageUrl}
+                              alt={`Foto ${index + 1}`}
+                              className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform"
+                              onClick={() => {
+                                if (imageUrl && imageUrl !== 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMiA5TDEzIDEwTDEyIDExTDExIDEwTDEyIDlaIiBmaWxsPSIjOTQ5Nzk3Ii8+Cjx0ZXh0IHg9IjEyIiB5PSIxNiIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjgiIGZpbGw9IiM5NDk3OTciIHRleHQtYW5jaG9yPSJtaWRkbGUiPkltYWdlbjwvdGV4dD4KPHN2Zz4K') {
+                                  window.open(imageUrl, '_blank');
+                                }
+                              }}
+                              onError={(e) => {
+                                e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMiA5TDEzIDEwTDEyIDExTDExIDEwTDEyIDlaIiBmaWxsPSIjOTQ5Nzk3Ii8+Cjx0ZXh0IHg9IjEyIiB5PSIxNiIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjgiIGZpbGw9IiM5NDk3OTciIHRleHQtYW5jaG9yPSJtaWRkbGUiPkltYWdlbjwvdGV4dD4KPHN2Zz4K';
+                              }}
+                            />
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
                     <p className="text-sm text-gray-500 italic">No hay fotos disponibles</p>
@@ -744,7 +783,20 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
                               {doc.size && <p className="text-xs text-gray-500">{(doc.size / 1024 / 1024).toFixed(2)} MB</p>}
                             </div>
                           </div>
-                          <button className="text-blue-600 hover:text-blue-800 transition-colors" title="Descargar">
+                          <button 
+                            className="text-blue-600 hover:text-blue-800 transition-colors" 
+                            title="Descargar"
+                            onClick={() => {
+                              if (doc.data) {
+                                const link = document.createElement('a');
+                                link.href = doc.data;
+                                link.download = doc.name;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }
+                            }}
+                          >
                             <Download className="w-4 h-4" />
                           </button>
                         </div>
