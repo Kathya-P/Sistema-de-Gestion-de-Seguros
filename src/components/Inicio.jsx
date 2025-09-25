@@ -60,7 +60,11 @@ const Inicio = ({
         <div className="text-center">
           <div className="flex justify-center items-center mb-6">
             <div className="bg-white p-4 rounded-full shadow-lg mr-4">
-              <Shield className="w-14 h-14" style={{color: '#1e3a72'}} />
+              <img 
+                src="/images/logo.png" 
+                alt="SecureTech Logo" 
+                className="w-16 h-16 object-contain"
+              />
             </div>
             <div>
               <h1 className="text-4xl font-bold text-gray-900">Inicio</h1>

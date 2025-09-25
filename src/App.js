@@ -23,6 +23,7 @@ const SistemaSeguroVehicular = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
+  const [loginMode, setLoginMode] = useState('login'); // 'login' o 'register'
   const [showLandingPage, setShowLandingPage] = useState(true);
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
 
@@ -230,17 +231,20 @@ const SistemaSeguroVehicular = () => {
   };
 
   const handleLoginClick = () => {
+    setLoginMode('login');
     setShowLogin(true);
     // Mantener la landing page visible
   };
 
   const handleShowRegister = () => {
+    setLoginMode('register');
     setShowLogin(true);
     // Mantener la landing page visible
   };
 
   const handleCloseLogin = () => {
     setShowLogin(false);
+    setLoginMode('login'); // Reset al modo login por defecto
     // La landing page se mantiene visible si no está autenticado
   };
 
@@ -355,7 +359,11 @@ const SistemaSeguroVehicular = () => {
                 ✕
               </button>
             </div>
-            <Login onLogin={handleLogin} onRegister={handleRegister} />
+            <Login 
+              onLogin={handleLogin} 
+              onRegister={handleRegister} 
+              initialMode={loginMode}
+            />
           </div>
         </div>
       )}
@@ -423,7 +431,11 @@ const SistemaSeguroVehicular = () => {
             <div className="sidebar">
               <div className="logo">
                 <div className="user-logo">
-                  <Shield className="w-6 h-6" style={{color: '#1e3a72'}} />
+                  <img 
+                    src="/images/logo.png" 
+                    alt="SecureTech Logo" 
+                    className="w-8 h-8 object-contain"
+                  />
                 </div>
                 <div>
                   <h1>SecureTech</h1>
@@ -472,7 +484,11 @@ const SistemaSeguroVehicular = () => {
                       onClick={handleLoginClick}
                       className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center justify-center"
                     >
-                      <Shield className="w-4 h-4 mr-2" />
+                      <img 
+                        src="/images/logo.png" 
+                        alt="SecureTech Logo" 
+                        className="w-6 h-6 object-contain"
+                      />
                       Iniciar Sesión
                     </button>
                   </div>

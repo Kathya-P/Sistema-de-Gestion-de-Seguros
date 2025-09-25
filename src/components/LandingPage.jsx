@@ -9,24 +9,34 @@ import {
   ArrowRight,
   Phone,
   Mail,
-  MapPin
+  MapPin,
+  Car,
+  Clock,
+  DollarSign,
+  AlertTriangle,
+  Zap,
+  Award
 } from 'lucide-react';
 
 const LandingPage = ({ onShowLogin, onShowRegister }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             {/* Logo */}
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-600 rounded-lg">
-                <Shield className="w-8 h-8 text-white" />
+              <div className="p-2 bg-white rounded-lg shadow-sm">
+                <img 
+                  src="/images/logo.png" 
+                  alt="SecureTech Logo" 
+                  className="w-10 h-10 object-contain"
+                />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">SecureTech</h1>
-                <p className="text-sm text-gray-600">Tu seguridad es nuestra prioridad</p>
+                <h1 className="text-2xl font-bold" style={{ color: '#03045e' }}>SecureTech</h1>
+                <p className="text-sm text-gray-600">Seguros vehiculares inteligentes</p>
               </div>
             </div>
 
@@ -34,13 +44,15 @@ const LandingPage = ({ onShowLogin, onShowRegister }) => {
             <div className="flex items-center space-x-4">
               <button
                 onClick={onShowLogin}
-                className="px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                className="px-4 py-2 font-medium transition-colors hover:opacity-80"
+                style={{ color: '#0077b6' }}
               >
                 Iniciar Sesión
               </button>
               <button
                 onClick={onShowRegister}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-md"
+                className="px-6 py-3 text-white rounded-lg transition-colors font-medium shadow-md hover:opacity-90"
+                style={{ backgroundColor: '#03045e' }}
               >
                 Registrarse
               </button>
@@ -52,45 +64,101 @@ const LandingPage = ({ onShowLogin, onShowRegister }) => {
       {/* Hero Section */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-5xl font-bold text-gray-900 mb-6">
-              Protege lo que más <span className="text-blue-600">Importa</span>
-            </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Sistema integral de gestión de seguros que te brinda tranquilidad y seguridad. 
-              Gestiona tus pólizas, reclamos y cotizaciones desde una plataforma moderna y confiable.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button
-                onClick={onShowRegister}
-                className="px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg shadow-lg flex items-center"
-              >
-                Comenzar Ahora
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </button>
-              <button
-                onClick={onShowLogin}
-                className="px-8 py-4 border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-semibold text-lg"
-              >
-                Acceder al Portal
-              </button>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Texto principal */}
+            <div>
+              <h1 className="text-5xl font-bold mb-6" style={{ color: '#03045e' }}>
+                Protege tu <span style={{ color: '#0077b6' }}>Vehículo</span> con la mejor cobertura
+              </h1>
+              <p className="text-xl mb-8" style={{ color: '#5a5a5a' }}>
+                Sistema integral de gestión de seguros vehiculares. Cotiza, gestiona pólizas, 
+                reporta accidentes y obtén asistencia 24/7 desde una plataforma moderna y confiable.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                <button
+                  onClick={onShowRegister}
+                  className="px-8 py-4 text-white rounded-lg transition-colors font-semibold text-lg shadow-lg flex items-center justify-center hover:opacity-90"
+                  style={{ backgroundColor: '#03045e' }}
+                >
+                  <Car className="w-5 h-5 mr-2" />
+                  Cotizar Ahora
+                </button>
+                <button
+                  onClick={onShowLogin}
+                  className="px-8 py-4 border-2 rounded-lg transition-colors font-semibold text-lg hover:bg-gray-50"
+                  style={{ 
+                    borderColor: '#0077b6',
+                    color: '#0077b6'
+                  }}
+                >
+                  Acceder al Portal
+                </button>
+              </div>
+
+              {/* Características rápidas */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-5 h-5" style={{ color: '#0077b6' }} />
+                  <span style={{ color: '#03045e' }}>Cotización instantánea</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Clock className="w-5 h-5" style={{ color: '#03045e' }} />
+                  <span style={{ color: '#03045e' }}>Atención 24/7</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Shield className="w-5 h-5" style={{ color: '#0077b6' }} />
+                  <span style={{ color: '#03045e' }}>Cobertura total</span>
+                </div>
+              </div>
             </div>
 
-            {/* Estadísticas */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">+10,000</div>
-                <div className="text-gray-600">Clientes Satisfechos</div>
+            {/* Imagen relacionada con carros */}
+            <div className="relative">
+              <div className="rounded-2xl overflow-hidden shadow-2xl">
+                <img 
+                  src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1883&q=80" 
+                  alt="Automóviles modernos en concesionario"
+                  className="w-full h-[400px] object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-800/30 to-transparent"></div>
               </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">99.9%</div>
-                <div className="text-gray-600">Tiempo de Actividad</div>
+              
+              {/* Elementos flotantes con colores de la paleta */}
+              <div className="absolute -top-4 -right-4 rounded-full p-3 shadow-lg" style={{ backgroundColor: '#03045e' }}>
+                <Shield className="w-6 h-6 text-white" />
               </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">24/7</div>
-                <div className="text-gray-600">Soporte Disponible</div>
+              <div className="absolute -bottom-4 -left-4 rounded-full p-3 shadow-lg" style={{ backgroundColor: '#0077b6' }}>
+                <CheckCircle className="w-6 h-6 text-white" />
               </div>
+              
+              {/* Badge de confianza con paleta de colores */}
+              <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-sm rounded-lg px-4 py-2 shadow-md border" style={{ borderColor: '#0077b6' }}>
+                <div className="flex items-center space-x-2">
+                  <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                  <span className="text-sm font-semibold" style={{ color: '#03045e' }}>Servicio Confiable</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Estadísticas */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mt-16 text-center">
+            <div>
+              <div className="text-3xl font-bold" style={{ color: '#03045e' }}>+5,000</div>
+              <div style={{ color: '#5a5a5a' }}>Vehículos Asegurados</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold" style={{ color: '#03045e' }}>98%</div>
+              <div style={{ color: '#5a5a5a' }}>Satisfacción del Cliente</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold" style={{ color: '#03045e' }}>24h</div>
+              <div style={{ color: '#5a5a5a' }}>Respuesta Promedio</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold" style={{ color: '#03045e' }}>15 años</div>
+              <div style={{ color: '#5a5a5a' }}>De Experiencia</div>
             </div>
           </div>
         </div>
@@ -104,74 +172,74 @@ const LandingPage = ({ onShowLogin, onShowRegister }) => {
               ¿Por qué elegir SecureTech?
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Ofrecemos la mejor experiencia en gestión de seguros con tecnología de vanguardia
+              La solución más completa para proteger tu vehículo con tecnología avanzada y servicio personalizado
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Feature 1 */}
-            <div className="text-center p-6 rounded-lg hover:shadow-lg transition-shadow">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-                <Shield className="w-8 h-8 text-blue-600" />
+            <div className="text-center p-6 rounded-lg hover:shadow-lg transition-shadow border border-gray-100">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ backgroundColor: '#f0f8ff' }}>
+                <Zap className="w-8 h-8" style={{ color: '#0077b6' }} />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Seguridad Garantizada</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Cotización Instantánea</h3>
               <p className="text-gray-600">
-                Tus datos están protegidos con los más altos estándares de seguridad y encriptación
+                Obtén tu cotización personalizada en segundos con nuestro sistema inteligente
               </p>
             </div>
 
             {/* Feature 2 */}
-            <div className="text-center p-6 rounded-lg hover:shadow-lg transition-shadow">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-                <CheckCircle className="w-8 h-8 text-green-600" />
+            <div className="text-center p-6 rounded-lg hover:shadow-lg transition-shadow border border-gray-100">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ backgroundColor: '#f0f8ff' }}>
+                <Clock className="w-8 h-8" style={{ color: '#03045e' }} />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Proceso Simplificado</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Atención 24/7</h3>
               <p className="text-gray-600">
-                Gestiona pólizas, reclamos y cotizaciones de manera fácil e intuitiva
+                Asistencia inmediata en caso de accidentes, grúas y emergencias las 24 horas
               </p>
             </div>
 
             {/* Feature 3 */}
-            <div className="text-center p-6 rounded-lg hover:shadow-lg transition-shadow">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
-                <Users className="w-8 h-8 text-purple-600" />
+            <div className="text-center p-6 rounded-lg hover:shadow-lg transition-shadow border border-gray-100">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ backgroundColor: '#f0f8ff' }}>
+                <Shield className="w-8 h-8" style={{ color: '#0077b6' }} />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Atención Personalizada</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Cobertura Completa</h3>
               <p className="text-gray-600">
-                Equipo de expertos disponible para ayudarte en cada paso del proceso
+                Protección total: daños propios, terceros, robo, fenómenos naturales y más
               </p>
             </div>
 
             {/* Feature 4 */}
-            <div className="text-center p-6 rounded-lg hover:shadow-lg transition-shadow">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-4">
-                <FileText className="w-8 h-8 text-orange-600" />
+            <div className="text-center p-6 rounded-lg hover:shadow-lg transition-shadow border border-gray-100">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ backgroundColor: '#f0f8ff' }}>
+                <FileText className="w-8 h-8" style={{ color: '#03045e' }} />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Documentación Digital</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Reporte de Accidentes</h3>
               <p className="text-gray-600">
-                Accede a todas tus pólizas y documentos desde cualquier lugar
+                Sistema digital para reportar siniestros con validación automática y seguimiento
               </p>
             </div>
 
             {/* Feature 5 */}
-            <div className="text-center p-6 rounded-lg hover:shadow-lg transition-shadow">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
-                <TrendingUp className="w-8 h-8 text-red-600" />
+            <div className="text-center p-6 rounded-lg hover:shadow-lg transition-shadow border border-gray-100">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ backgroundColor: '#f0f8ff' }}>
+                <Users className="w-8 h-8" style={{ color: '#0077b6' }} />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Reportes Avanzados</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Gestión Digital</h3>
               <p className="text-gray-600">
-                Analítica detallada para tomar mejores decisiones sobre tus seguros
+                Administra todas tus pólizas, pagos y reclamos desde una plataforma unificada
               </p>
             </div>
 
             {/* Feature 6 */}
-            <div className="text-center p-6 rounded-lg hover:shadow-lg transition-shadow">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-4">
-                <Star className="w-8 h-8 text-yellow-600" />
+            <div className="text-center p-6 rounded-lg hover:shadow-lg transition-shadow border border-gray-100">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ backgroundColor: '#f0f8ff' }}>
+                <Award className="w-8 h-8" style={{ color: '#03045e' }} />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Calidad Premium</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Precios Competitivos</h3>
               <p className="text-gray-600">
-                Servicio de primera clase respaldado por años de experiencia
+                Las mejores tarifas del mercado con planes flexibles adaptados a tu presupuesto
               </p>
             </div>
           </div>
@@ -185,17 +253,21 @@ const LandingPage = ({ onShowLogin, onShowRegister }) => {
             {/* Company Info */}
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center space-x-3 mb-4">
-                <div className="p-2 bg-blue-600 rounded-lg">
-                  <Shield className="w-6 h-6 text-white" />
+                <div className="p-2 bg-white rounded-lg shadow-sm">
+                  <img 
+                    src="/images/logo.png" 
+                    alt="SecureTech Logo" 
+                    className="w-8 h-8 object-contain"
+                  />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold">SecureTech</h3>
-                  <p className="text-gray-400">Tu seguridad es nuestra prioridad</p>
+                  <p className="text-gray-400">Seguros vehiculares inteligentes</p>
                 </div>
               </div>
               <p className="text-gray-400 mb-4">
-                Líderes en tecnología de seguros, brindando soluciones innovadoras 
-                y confiables para proteger lo que más valoras.
+                Especializados en seguros vehiculares con tecnología avanzada. 
+                Protegemos tu vehículo y tu tranquilidad con la mejor cobertura del mercado.
               </p>
             </div>
 
@@ -232,10 +304,10 @@ const LandingPage = ({ onShowLogin, onShowRegister }) => {
                   onClick={onShowRegister}
                   className="block text-gray-400 hover:text-white transition-colors"
                 >
-                  Registrarse
+                  Cotizar Seguro
                 </button>
                 <a href="#" className="block text-gray-400 hover:text-white transition-colors">
-                  Soporte
+                  Asistencia Vial
                 </a>
                 <a href="#" className="block text-gray-400 hover:text-white transition-colors">
                   Términos y Condiciones
@@ -246,7 +318,7 @@ const LandingPage = ({ onShowLogin, onShowRegister }) => {
 
           <div className="border-t border-gray-800 mt-8 pt-8 text-center">
             <p className="text-gray-400">
-              © 2025 SecureTech. Todos los derechos reservados.
+              © 2025 SecureTech. Todos los derechos reservados. Seguros vehiculares con tecnología avanzada.
             </p>
           </div>
         </div>

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Shield, Eye, EyeOff, User, Mail, Phone, UserPlus } from 'lucide-react';
 
-const AuthComponent = ({ onLogin, onRegister }) => {
-  const [isLogin, setIsLogin] = useState(true);
+const AuthComponent = ({ onLogin, onRegister, initialMode = 'login' }) => {
+  const [isLogin, setIsLogin] = useState(initialMode === 'login');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
@@ -22,6 +22,11 @@ const AuthComponent = ({ onLogin, onRegister }) => {
     confirmPassword: '',
     role: 'cliente'
   });
+
+  // Actualizar el modo cuando cambie initialMode
+  useEffect(() => {
+    setIsLogin(initialMode === 'login');
+  }, [initialMode]);
 
   const handleLoginSubmit = (e) => {
     e.preventDefault();
@@ -80,26 +85,49 @@ const AuthComponent = ({ onLogin, onRegister }) => {
 
   return (
     <div>
+      {/* Logo y Header */}
+      <div className="text-center mb-6">
+        <div className="flex justify-center mb-4">
+          <div className="p-3 bg-white rounded-full shadow-md border border-gray-200">
+            <img 
+              src="/images/logo.png" 
+              alt="SecureTech Logo" 
+              className="w-12 h-12 object-contain"
+            />
+          </div>
+        </div>
+        <h2 className="text-2xl font-bold mb-1" style={{ color: '#03045e' }}>SecureTech</h2>
+        <p className="text-sm text-gray-600">Seguros vehiculares inteligentes</p>
+      </div>
+
       {/* Pestañas */}
       <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
         <button
-          onClick={() => {setIsLogin(true); setError('');}}
+          onClick={() => {
+            setIsLogin(true); 
+            setError('');
+          }}
           className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
             isLogin 
-              ? 'bg-white text-blue-600 shadow-sm' 
+              ? 'bg-white shadow-sm' 
               : 'text-gray-600 hover:text-gray-800'
           }`}
+          style={isLogin ? { color: '#03045e' } : {}}
         >
           <Shield className="w-4 h-4 inline mr-2" />
           Iniciar Sesión
         </button>
         <button
-          onClick={() => {setIsLogin(false); setError('');}}
+          onClick={() => {
+            setIsLogin(false); 
+            setError('');
+          }}
           className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
             !isLogin 
-              ? 'bg-white text-blue-600 shadow-sm' 
+              ? 'bg-white shadow-sm' 
               : 'text-gray-600 hover:text-gray-800'
           }`}
+          style={!isLogin ? { color: '#03045e' } : {}}
         >
           <UserPlus className="w-4 h-4 inline mr-2" />
           Registrarse
@@ -159,7 +187,7 @@ const AuthComponent = ({ onLogin, onRegister }) => {
             type="submit"
             disabled={isLoading}
             className="w-full py-3 px-4 rounded-lg font-medium text-white transition-colors duration-200 disabled:opacity-50"
-            style={{backgroundColor: '#1e3a72'}}
+            style={{backgroundColor: '#03045e'}}
           >
             {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </button>
@@ -304,7 +332,7 @@ const AuthComponent = ({ onLogin, onRegister }) => {
             type="submit"
             disabled={isLoading}
             className="w-full py-3 px-4 rounded-lg font-medium text-white transition-colors duration-200 disabled:opacity-50"
-            style={{backgroundColor: '#1e3a72'}}
+            style={{backgroundColor: '#03045e'}}
           >
             {isLoading ? 'Registrando...' : 'Crear Cuenta'}
           </button>
