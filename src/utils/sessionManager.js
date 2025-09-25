@@ -108,6 +108,7 @@ export const userManager = {
             name: 'Administrador',
             email: 'admin@securetech.com',
             phone: '2234-0000',
+            address: 'San José, Costa Rica',
             role: 'Administrador',
             rol: 'admin',
             createdAt: new Date().toISOString()
@@ -119,6 +120,7 @@ export const userManager = {
             name: 'María López',
             email: 'maria.lopez@securetech.com',
             phone: '2234-1111',
+            address: 'Cartago, Costa Rica',
             role: 'Cliente',
             rol: 'cliente',
             createdAt: new Date().toISOString()
@@ -166,6 +168,7 @@ export const userManager = {
         name: userData.name,
         email: userData.email,
         phone: userData.phone,
+        address: userData.address || '',
         role: userData.role === 'admin' ? 'Administrador' : 
               userData.role === 'agente' ? 'Cliente' : 'Cliente',
         rol: userData.role,

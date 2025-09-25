@@ -107,34 +107,51 @@ const Clientes = ({ clientes, setClientes, permissions, onClientesUpdated }) => 
       </div>
 
       {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Clientes</p>
-              <p className="text-2xl font-bold" style={{color: '#2d5016'}}>{clientes.length}</p>
+              <p className="text-sm text-gray-600">Total de Clientes</p>
+              <p className="text-3xl font-bold" style={{color: '#2d5016'}}>{clientes.length}</p>
+              <p className="text-xs text-gray-500 mt-1">Usuarios registrados</p>
             </div>
-            <Users className="w-8 h-8" style={{color: '#2d5016', opacity: 0.3}} />
+            <div className="p-3 rounded-full" style={{backgroundColor: '#f0fdf4'}}>
+              <Users className="w-8 h-8" style={{color: '#2d5016'}} />
+            </div>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Con Pólizas Activas</p>
-              <p className="text-2xl font-bold" style={{color: '#1e3a72'}}>
-                {clientes.filter(c => c.polizasActivas > 0).length}
+              <p className="text-sm text-gray-600">Clientes Activos</p>
+              <p className="text-3xl font-bold" style={{color: '#1e3a72'}}>
+                {clientes.length}
               </p>
+              <p className="text-xs text-gray-500 mt-1">Perfiles verificados</p>
             </div>
-            <FileText className="w-8 h-8" style={{color: '#1e3a72', opacity: 0.3}} />
+            <div className="p-3 rounded-full" style={{backgroundColor: '#eff6ff'}}>
+              <FileText className="w-8 h-8" style={{color: '#1e3a72'}} />
+            </div>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Registros este mes</p>
-              <p className="text-2xl font-bold text-gray-900">12</p>
+              <p className="text-sm text-gray-600">Nuevos este mes</p>
+              <p className="text-3xl font-bold text-gray-900">
+                {clientes.filter(c => {
+                  if (!c.fechaRegistro) return false;
+                  const fechaRegistro = new Date(c.fechaRegistro);
+                  const ahora = new Date();
+                  return fechaRegistro.getMonth() === ahora.getMonth() && 
+                         fechaRegistro.getFullYear() === ahora.getFullYear();
+                }).length}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">Registrados recientemente</p>
             </div>
-            <Calendar className="w-8 h-8 text-gray-400" />
+            <div className="p-3 rounded-full bg-gray-100">
+              <Calendar className="w-8 h-8 text-gray-400" />
+            </div>
           </div>
         </div>
       </div>
@@ -147,53 +164,43 @@ const Clientes = ({ clientes, setClientes, permissions, onClientesUpdated }) => 
           </h3>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-8">
           {filteredClientes.map((cliente) => (
-            <div key={cliente.id} className="bg-gray-50 rounded-lg p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between mb-3">
+            <div key={cliente.id} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-blue-300">
+              <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center mr-3" style={{backgroundColor: '#f0fdf4'}}>
-                    <Users className="w-5 h-5" style={{color: '#2d5016'}} />
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center mr-4 bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-blue-300">
+                    <Users className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900">{cliente.nombre}</h4>
-                    <p className="text-sm text-gray-500">{cliente.tipoDocumento}: {cliente.numeroDocumento}</p>
+                    <h4 className="font-bold text-gray-900 text-lg">{cliente.nombre}</h4>
+                    <p className="text-sm text-gray-500 font-medium">Usuario: {cliente.numeroDocumento}</p>
                   </div>
                 </div>
-                <div className="flex space-x-1">
+                <div className="flex space-x-2">
                   <button 
-                    className="text-blue-600 hover:text-blue-900 transition-colors"
+                    className="text-blue-600 hover:text-blue-800 transition-colors p-2 hover:bg-blue-50 rounded-full"
                     onClick={() => handleVerDetalles(cliente)}
                   >
-                    <Eye className="w-4 h-4" />
+                    <Eye className="w-5 h-5" />
                   </button>
                   {permissions?.canDelete && (
                     <button 
-                      className="text-red-600 hover:text-red-900 transition-colors"
+                      className="text-red-600 hover:text-red-800 transition-colors p-2 hover:bg-red-50 rounded-full"
                       onClick={() => handleEliminar(cliente)}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-5 h-5" />
                     </button>
                   )}
                 </div>
               </div>
               
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center text-gray-600">
-                  <Mail className="w-4 h-4 mr-2" />
-                  <span className="truncate">{cliente.email}</span>
-                </div>
-                <div className="flex items-center text-gray-600">
-                  <Phone className="w-4 h-4 mr-2" />
-                  <span>{cliente.telefono}</span>
-                </div>
-                <div className="flex items-center text-gray-600">
-                  <MapPin className="w-4 h-4 mr-2" />
-                  <span className="truncate">{cliente.direccion}</span>
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                  <span className="text-gray-500">Pólizas activas:</span>
-                  <span className="font-semibold" style={{color: '#2d5016'}}>{cliente.polizasActivas}</span>
+              <div className="mt-4 pt-4 border-t border-gray-300">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600 font-medium">Estado:</span>
+                  <span className="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-green-100 text-green-800 border border-green-200">
+                    ✓ Verificado
+                  </span>
                 </div>
               </div>
             </div>
@@ -219,37 +226,53 @@ const Clientes = ({ clientes, setClientes, permissions, onClientesUpdated }) => 
               <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
             </div>
             <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
               <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <div className="sm:flex sm:items-start">
                   <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
                     <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
                       Detalles del Cliente
                     </h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-500 mb-1">Nombre:</p>
-                        <p className="font-medium">{selectedCliente.nombre}</p>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">Nombre completo:</p>
+                          <p className="font-medium">{selectedCliente.nombre}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">Nombre de usuario:</p>
+                          <p className="font-medium">{selectedCliente.numeroDocumento}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">Correo electrónico:</p>
+                          <p className="font-medium">{selectedCliente.email}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">Teléfono:</p>
+                          <p className="font-medium">{selectedCliente.telefono || 'No proporcionado'}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-500 mb-1">Documento:</p>
-                        <p className="font-medium">{selectedCliente.tipoDocumento}: {selectedCliente.numeroDocumento}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 mb-1">Email:</p>
-                        <p className="font-medium">{selectedCliente.email}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 mb-1">Teléfono:</p>
-                        <p className="font-medium">{selectedCliente.telefono}</p>
-                      </div>
-                      <div className="col-span-2">
-                        <p className="text-sm text-gray-500 mb-1">Dirección:</p>
-                        <p className="font-medium">{selectedCliente.direccion}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 mb-1">Pólizas activas:</p>
-                        <p className="font-medium">{selectedCliente.polizasActivas}</p>
+                      
+                      <div className="border-t border-gray-200 pt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-gray-500 mb-1">Fecha de registro:</p>
+                            <p className="font-medium">
+                              {selectedCliente.fechaRegistro 
+                                ? new Date(selectedCliente.fechaRegistro).toLocaleDateString('es-ES', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                  })
+                                : 'No disponible'
+                              }
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500 mb-1">ID de cliente:</p>
+                            <p className="font-medium text-gray-600">#{String(selectedCliente.id).slice(-6)}</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
