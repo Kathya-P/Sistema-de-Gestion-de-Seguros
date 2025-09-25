@@ -30,6 +30,7 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
   const [mostrarModal, setMostrarModal] = useState(false);
   const [accidenteSeleccionado, setAccidenteSeleccionado] = useState(null);
   const [vehiculosAsegurados, setVehiculosAsegurados] = useState([]);
+  const [polizasFiltradas, setPolizasFiltradas] = useState([]);
   const [accidentes, setAccidentes] = useState([]);
   const [comentarioAdmin, setComentarioAdmin] = useState('');
   const [mostrarAcciones, setMostrarAcciones] = useState(false);
@@ -152,41 +153,27 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
       console.log('   - Usuario cliente identificado:', currentUser);
 
       if (polizas && polizas.length > 0) {
-        const vehiculos = polizas
-          .filter(poliza => {
-            console.log('   - Evaluando póliza:', {
-              numero: poliza.numeroPoliza,
-              cliente: poliza.titular || poliza.clienteName,
-              clienteId: poliza.clienteId,
-              currentUserId: currentUser?.id,
-              currentUserName: currentUser?.name
-            });
-            
-            const matchesById = poliza.clienteId === currentUser?.id;
-            const matchesByName = poliza.titular === currentUser?.name || poliza.clienteName === currentUser?.name;
-            const matchesByTitular = poliza.titular?.toLowerCase() === currentUser?.name?.toLowerCase();
-            
-            return poliza.estado === 'Activa' && (matchesById || matchesByName || matchesByTitular);
-          })
-          .map(poliza => ({
-            id: `${poliza.numeroPoliza}-${poliza.vehiculo}`,
-            polizaId: poliza.numeroPoliza,
-            vehiculoCompleto: poliza.vehiculo,
-            marca: poliza.vehiculo?.split(' ')[0] || '',
-            modelo: poliza.vehiculo?.split(' ')[1] || '',
-            año: poliza.vehiculo?.split(' ')[2] || '',
-            placa: poliza.placa || 'No especificada',
-            titular: poliza.titular || poliza.clienteName
-          }));
-
-        console.log('   - Vehículos asegurados encontrados:', vehiculos);
-        setVehiculosAsegurados(vehiculos);
-      }
-    } else if (permissions?.isAdmin && polizas) {
-      // Administrador puede ver todos los vehículos asegurados
-      const todosVehiculos = polizas
-        .filter(poliza => poliza.estado === 'Activa')
-        .map(poliza => ({
+        // Filtrar pólizas del cliente actual
+        const polizasCliente = polizas.filter(poliza => {
+          console.log('   - Evaluando póliza:', {
+            numero: poliza.numeroPoliza,
+            cliente: poliza.titular || poliza.clienteName,
+            clienteId: poliza.clienteId,
+            currentUserId: currentUser?.id,
+            currentUserName: currentUser?.name
+          });
+          
+          const matchesById = poliza.clienteId === currentUser?.id;
+          const matchesByName = poliza.titular === currentUser?.name || poliza.clienteName === currentUser?.name;
+          const matchesByTitular = poliza.titular?.toLowerCase() === currentUser?.name?.toLowerCase();
+          
+          return poliza.estado === 'Activa' && (matchesById || matchesByName || matchesByTitular);
+        });
+        
+        console.log('   - Pólizas del cliente encontradas:', polizasCliente);
+        
+        // Crear vehículos asegurados para mostrar en lista (si es necesario)
+        const vehiculos = polizasCliente.map(poliza => ({
           id: `${poliza.numeroPoliza}-${poliza.vehiculo}`,
           polizaId: poliza.numeroPoliza,
           vehiculoCompleto: poliza.vehiculo,
@@ -197,8 +184,29 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
           titular: poliza.titular || poliza.clienteName
         }));
 
+        setVehiculosAsegurados(vehiculos);
+        
+        // Guardar las pólizas filtradas para el formulario
+        setPolizasFiltradas(polizasCliente);
+      }
+    } else if (permissions?.isAdmin && polizas) {
+      // Administrador puede ver todas las pólizas activas
+      const polizasActivas = polizas.filter(poliza => poliza.estado === 'Activa');
+      
+      const todosVehiculos = polizasActivas.map(poliza => ({
+        id: `${poliza.numeroPoliza}-${poliza.vehiculo}`,
+        polizaId: poliza.numeroPoliza,
+        vehiculoCompleto: poliza.vehiculo,
+        marca: poliza.vehiculo?.split(' ')[0] || '',
+        modelo: poliza.vehiculo?.split(' ')[1] || '',
+        año: poliza.vehiculo?.split(' ')[2] || '',
+        placa: poliza.placa || 'No especificada',
+        titular: poliza.titular || poliza.clienteName
+      }));
+
       console.log('   - Admin: Todos los vehículos asegurados:', todosVehiculos.length);
       setVehiculosAsegurados(todosVehiculos);
+      setPolizasFiltradas(polizasActivas);
     }
   }, [permissions, polizas]);
 
@@ -311,7 +319,7 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
     // Usar el FormularioAccidenteNuevo con sistema de 3 pasos
     return (
       <FormularioAccidenteNuevo
-        polizas={polizas}
+        polizas={polizasFiltradas}
         currentUser={currentUser}
         onSubmit={(datosAccidente) => {
           // Crear el accidente usando los datos del formulario mejorado
@@ -399,8 +407,11 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
     // Filtro adicional para clientes - solo sus propios accidentes
     const currentUser = sessionManager.getCurrentUser();
     if (permissions?.isCliente && currentUser) {
-      return matchesSearch && matchesEstado && matchesGravedad && 
-             (accidente.clienteId === currentUser.id || accidente.cliente === currentUser.name);
+      const esDelUsuario = accidente.clienteId === currentUser.id || 
+                          accidente.cliente === currentUser.name ||
+                          accidente.cliente?.toLowerCase() === currentUser.name?.toLowerCase();
+      
+      return matchesSearch && matchesEstado && matchesGravedad && esDelUsuario;
     }
 
     return matchesSearch && matchesEstado && matchesGravedad;
