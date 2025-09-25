@@ -31,6 +31,10 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
   const [accidenteSeleccionado, setAccidenteSeleccionado] = useState(null);
   const [vehiculosAsegurados, setVehiculosAsegurados] = useState([]);
   const [accidentes, setAccidentes] = useState([]);
+  const [comentarioAdmin, setComentarioAdmin] = useState('');
+  const [mostrarAcciones, setMostrarAcciones] = useState(false);
+  
+  const currentUser = sessionManager.getCurrentUser();
 
   // Función para obtener URL segura de fotos
   const getSafeImageUrl = (foto) => {
@@ -57,6 +61,76 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
       console.warn('Error processing image:', error);
       return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMiA5TDEzIDEwTDEyIDExTDExIDEwTDEyIDlaIiBmaWxsPSIjOTQ5Nzk3Ii8+Cjx0ZXh0IHg9IjEyIiB5PSIxNiIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjgiIGZpbGw9IiM5NDk3OTciIHRleHQtYW5jaG9yPSJtaWRkbGUiPkltYWdlbjwvdGV4dD4KPHN2Zz4K';
     }
+  };
+
+  // Funciones para acciones del admin
+  const handleAceptarAccidente = () => {
+    if (!comentarioAdmin.trim()) {
+      alert('Por favor, agregue un comentario antes de proceder.');
+      return;
+    }
+
+    const accidentesActualizados = accidentes.map(acc => 
+      acc.id === accidenteSeleccionado.id 
+        ? {
+            ...acc,
+            estado: 'En investigación',
+            enviadoADeteccionFraudes: true,
+            comentariosAdmin: [
+              ...(acc.comentariosAdmin || []),
+              {
+                id: Date.now(),
+                fecha: new Date().toISOString(),
+                administrador: currentUser.name,
+                comentario: comentarioAdmin,
+                accion: 'Aceptado y enviado a detección de fraudes'
+              }
+            ],
+            fechaEnvioFraudes: new Date().toISOString()
+          }
+        : acc
+    );
+
+    localStorage.setItem('accidentes', JSON.stringify(accidentesActualizados));
+    setAccidentes(accidentesActualizados);
+    setAccidenteSeleccionado(accidentesActualizados.find(acc => acc.id === accidenteSeleccionado.id));
+    setComentarioAdmin('');
+    setMostrarAcciones(false);
+    alert('✅ Accidente aceptado y enviado a detección de fraudes correctamente.');
+  };
+
+  const handleRechazarAccidente = () => {
+    if (!comentarioAdmin.trim()) {
+      alert('Por favor, agregue un comentario explicando el motivo del rechazo.');
+      return;
+    }
+
+    const accidentesActualizados = accidentes.map(acc => 
+      acc.id === accidenteSeleccionado.id 
+        ? {
+            ...acc,
+            estado: 'Rechazado',
+            comentariosAdmin: [
+              ...(acc.comentariosAdmin || []),
+              {
+                id: Date.now(),
+                fecha: new Date().toISOString(),
+                administrador: currentUser.name,
+                comentario: comentarioAdmin,
+                accion: 'Rechazado'
+              }
+            ],
+            fechaRechazo: new Date().toISOString()
+          }
+        : acc
+    );
+
+    localStorage.setItem('accidentes', JSON.stringify(accidentesActualizados));
+    setAccidentes(accidentesActualizados);
+    setAccidenteSeleccionado(accidentesActualizados.find(acc => acc.id === accidenteSeleccionado.id));
+    setComentarioAdmin('');
+    setMostrarAcciones(false);
+    alert('❌ Accidente rechazado. Se notificará al cliente.');
   };
 
   // Cargar datos iniciales
@@ -601,7 +675,8 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
                             accidente.estado === 'Reportado' ? 'bg-yellow-100 text-yellow-800' :
                             accidente.estado === 'En investigación' ? 'bg-orange-100 text-orange-800' :
                             accidente.estado === 'Completado' ? 'bg-green-100 text-green-800' :
-                            'bg-red-100 text-red-800'
+                            accidente.estado === 'Rechazado' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
                           }`}>
                             {accidente.estado}
                           </span>
@@ -616,7 +691,23 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex justify-end space-x-2">
+                          <div className="flex justify-end items-center space-x-2">
+                            {/* Indicador de comentarios del admin (admin siempre, cliente solo si rechazado) */}
+                            {accidente.comentariosAdmin && accidente.comentariosAdmin.length > 0 && 
+                             (permissions?.isAdmin || accidente.estado === 'Rechazado') && (
+                              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium flex items-center">
+                                <FileText className="w-3 h-3 mr-1" />
+                                {accidente.comentariosAdmin.length}
+                              </span>
+                            )}
+                            
+                            {/* Indicador de enviado a fraudes (solo admin) */}
+                            {permissions?.isAdmin && accidente.enviadoADeteccionFraudes && (
+                              <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium">
+                                🔍 Fraudes
+                              </span>
+                            )}
+
                             <button
                               onClick={() => {
                                 setAccidenteSeleccionado(accidente);
@@ -700,7 +791,8 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
                       accidenteSeleccionado.estado === 'Reportado' ? 'text-yellow-600' :
                       accidenteSeleccionado.estado === 'En investigación' ? 'text-orange-600' :
                       accidenteSeleccionado.estado === 'Completado' ? 'text-green-600' :
-                      'text-red-600'
+                      accidenteSeleccionado.estado === 'Rechazado' ? 'text-red-600' :
+                      'text-gray-600'
                     }`}>{accidenteSeleccionado.estado}</span></p>
                     <p><strong>Gravedad:</strong> <span className={`font-medium ${
                       accidenteSeleccionado.gravedad === 'Leve' ? 'text-green-600' :
@@ -807,6 +899,107 @@ const RevisarAccidentes = ({ permissions, polizas, setActiveModule }) => {
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Comentarios del Admin (admin siempre, cliente solo si fue rechazado) */}
+            {accidenteSeleccionado.comentariosAdmin && accidenteSeleccionado.comentariosAdmin.length > 0 && 
+             (permissions?.isAdmin || accidenteSeleccionado.estado === 'Rechazado') && (
+              <div className="mt-6 border-t border-gray-200 pt-6">
+                <h4 className="font-medium text-gray-900 mb-4">Historial de Comentarios del Admin</h4>
+                <div className="space-y-3">
+                  {accidenteSeleccionado.comentariosAdmin.map((comentario) => (
+                    <div key={comentario.id} className="bg-blue-50 border-l-4 border-blue-400 p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-medium text-blue-900">{comentario.administrador}</span>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            comentario.accion === 'Aceptado y enviado a detección de fraudes' ? 'bg-green-100 text-green-800' :
+                            comentario.accion === 'Rechazado' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {comentario.accion}
+                          </span>
+                        </div>
+                        <span className="text-xs text-blue-600">
+                          {new Date(comentario.fecha).toLocaleString('es-ES')}
+                        </span>
+                      </div>
+                      <p className="text-blue-800">{comentario.comentario}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Acciones del Admin */}
+            {permissions?.isAdmin && !['Rechazado', 'En investigación'].includes(accidenteSeleccionado.estado) && (
+              <div className="mt-6 border-t border-gray-200 pt-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="font-medium text-gray-900">Acciones de Administrador</h4>
+                  <button
+                    onClick={() => setMostrarAcciones(!mostrarAcciones)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    {mostrarAcciones ? 'Ocultar Acciones' : 'Gestionar Accidente'}
+                  </button>
+                </div>
+
+                {mostrarAcciones && (
+                  <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Comentario/Observaciones *
+                      </label>
+                      <textarea
+                        value={comentarioAdmin}
+                        onChange={(e) => setComentarioAdmin(e.target.value)}
+                        placeholder="Agregue sus comentarios u observaciones sobre este accidente..."
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                        required
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        onClick={handleAceptarAccidente}
+                        disabled={!comentarioAdmin.trim()}
+                        className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Aceptar y Enviar a Fraudes
+                      </button>
+
+                      <button
+                        onClick={handleRechazarAccidente}
+                        disabled={!comentarioAdmin.trim()}
+                        className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Rechazar Solicitud
+                      </button>
+                    </div>
+
+                    <p className="text-xs text-gray-500">
+                      * El comentario es obligatorio y será visible para el cliente (especifique motivos)
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Botón cerrar */}
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => {
+                  setMostrarModal(false);
+                  setMostrarAcciones(false);
+                  setComentarioAdmin('');
+                }}
+                className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                Cerrar
+              </button>
             </div>
           </div>
         </div>
