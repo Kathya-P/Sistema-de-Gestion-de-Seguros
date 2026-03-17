@@ -1,0 +1,5 @@
+{
+  "buildCommand": "CI=false npm run build",
+  "outputDirectory": "build",
+  "nodeVersion": "20.x"
+}
