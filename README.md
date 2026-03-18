@@ -32,7 +32,7 @@ npm start
 
 ## 📱 Demo
 
-La aplicación estará disponible en (hay que actualizar)
+La aplicación estará disponible en https://kathya-p.github.io/Sistema-de-Gestion-de-Seguros/
 
 ## 🏗️ Estructura del Proyecto
 
